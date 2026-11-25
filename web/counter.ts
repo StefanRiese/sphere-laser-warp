@@ -8,20 +8,27 @@
 const SITE = 'https://stefanriese.goatcounter.com';
 const EVENT = 'download';
 
-function show(text: string | null): void {
+// GoatCounter caches the public counter for up to four hours, so a fresh read right after a
+// download is stale. Keep the last known number and add this visit's downloads to it locally.
+let shown: number | null = null;
+
+function show(n: number | null): void {
   const el = document.getElementById('useCount');
-  if (!el || text === null) return;
+  if (!el || n === null) return;
+  shown = n;
   el.hidden = false;
-  el.querySelector('b')!.textContent = text;
+  el.querySelector('b')!.textContent = n.toLocaleString();
 }
 
-async function read(): Promise<string | null> {
+async function read(): Promise<number | null> {
   try {
     const res = await fetch(`${SITE}/counter/${EVENT}.json`, { cache: 'no-store' });
-    if (res.status === 404) return '0'; // nothing counted yet
+    if (res.status === 404) return 0; // nothing counted yet
     if (!res.ok) return null;
     const c = (await res.json()).count;
-    return typeof c === 'string' || typeof c === 'number' ? String(c) : null;
+    // formatted string with thousands separators, e.g. "1,234"
+    const n = typeof c === 'string' ? Number(c.replace(/\D/g, '')) : c;
+    return typeof n === 'number' && Number.isFinite(n) ? n : null;
   } catch {
     return null;
   }
@@ -32,13 +39,8 @@ export async function loadCount(): Promise<void> {
   show(await read());
 }
 
-/** Count one use, then refresh the displayed number. */
-export async function countUse(): Promise<void> {
-  await new Promise<void>((resolve) => {
-    const img = new Image();
-    img.onload = img.onerror = () => resolve();
-    img.src = `${SITE}/count?p=${EVENT}&e=true&t=Download&rnd=${Math.random().toString(36).slice(2)}`;
-    setTimeout(resolve, 5000);
-  });
-  show(await read());
+/** Count one use and bump the displayed number. */
+export function countUse(): void {
+  new Image().src = `${SITE}/count?p=${EVENT}&e=true&t=Download&rnd=${Math.random().toString(36).slice(2)}`;
+  show((shown ?? 0) + 1);
 }
