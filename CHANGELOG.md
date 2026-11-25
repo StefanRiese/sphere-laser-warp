@@ -7,6 +7,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- "GitHub" link in the header pointing to the repository.
 - Site icon (favicon, also shown next to the title in the header) and status badges in the README.
 - Theme switch (System / Light / Dark), remembered across visits; the dark theme now has readable button text.
 - "Donate" / "Spenden" button in the header linking to the maintainer's PayPal.me page.

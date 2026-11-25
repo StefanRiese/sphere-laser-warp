@@ -39,3 +39,5 @@ label.lang select, label.theme select { padding: 4px 6px; font: inherit; }
 .headtools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 14px; }
 a.donate { padding: 6px 14px; border-radius: 6px; background: var(--accent); color: var(--on-accent); text-decoration: none; font-weight: 600; font-size: .9rem; }
 a.donate:hover { filter: brightness(1.1); }
+a.ghlink { color: inherit; font-size: .9rem; text-decoration: underline; }
+a.ghlink:hover { text-decoration: none; }
