@@ -2,8 +2,6 @@ import { DEFAULT_PARAMS, type WarpParams, transpose } from '../core/warp';
 import type { Projection } from '../core/projection';
 import { presets, type PresetParams } from './presets';
 import { makeSample } from './sample';
-import { CALIBRATION_SQUARE_MM, CALIBRATION_WIDTH_MM, makeCalibrationPattern } from './calibration';
-import { calibrate } from '../core/calibration';
 import { loadImage } from './loadImage';
 import { warpSvgToVector } from './vectorWarp';
 import { canvasToPng, canvasToSvg, download } from './export';
@@ -300,63 +298,6 @@ $('sampleBtn').addEventListener('click', () => {
   run();
 });
 
-$('calBtn').addEventListener('click', () => {
-  clearSvg();
-  sourceName = 'calibration';
-  setSource(makeCalibrationPattern());
-  $<HTMLSelectElement>('sizeBy').value = 'width';
-  $<HTMLSelectElement>('sizeBy').dispatchEvent(new Event('change'));
-  $<HTMLInputElement>('imageSizeMm').value = String(CALIBRATION_WIDTH_MM);
-  $<HTMLInputElement>('axisAngleDeg').value = '0';
-  $<HTMLInputElement>('offsetAxisMm').value = '0';
-  $<HTMLDetailsElement>('calib').open = true;
-  run();
-});
-
-// --- evaluating a test engraving ---
-let suggestedDiameter = 0;
-function evaluateCalibration(): void {
-  const axis = parseFloat($<HTMLInputElement>('measAxis').value);
-  const around = parseFloat($<HTMLInputElement>('measAround').value);
-  const out = $('calResult');
-  const apply = $<HTMLButtonElement>('applyDiameter');
-  apply.hidden = true;
-  if (!(axis > 0) && !(around > 0)) {
-    out.textContent = '';
-    return;
-  }
-  const p = readParams();
-  const target = (CALIBRATION_SQUARE_MM * p.imageWidthMm) / CALIBRATION_WIDTH_MM;
-  const r = calibrate({
-    ballDiameterMm: p.ballDiameterMm,
-    targetMm: target,
-    measuredAxisMm: axis > 0 ? axis : target,
-    measuredAroundMm: around > 0 ? around : target,
-  });
-  const pct = (v: number) => `${fmt(v * 100)} %`;
-  const lines = [t('calTarget', { t: fmt(target) })];
-  if (axis > 0) {
-    lines.push(t('calAxis', { pct: pct(r.axisRatio) }) + (Math.abs(r.axisRatio - 1) > 0.01 ? ' ' + t('calMachine') : ''));
-  }
-  if (around > 0) {
-    lines.push(t('calAround', { pct: pct(r.aroundRatio), d: fmt(r.suggestedBallDiameterMm) }));
-    if (Math.abs(r.aroundRatio - 1) > 0.005) {
-      suggestedDiameter = r.suggestedBallDiameterMm;
-      apply.hidden = false;
-    }
-  }
-  out.textContent = lines.join(' ');
-}
-$('measAxis').addEventListener('input', evaluateCalibration);
-$('measAround').addEventListener('input', evaluateCalibration);
-$('applyDiameter').addEventListener('click', () => {
-  $<HTMLInputElement>('ballDiameterMm').value = suggestedDiameter.toFixed(1);
-  $<HTMLInputElement>('measAxis').value = '';
-  $<HTMLInputElement>('measAround').value = '';
-  evaluateCalibration();
-  run();
-});
-
 // start with the sample so there is something to look at right away
 sourceName = 'sample';
 setSource(makeSample());
@@ -376,7 +317,6 @@ onLangChange(() => {
   buildPresetOptions();
   updateSizeLabel();
   updateFileHint();
-  evaluateCalibration();
   preview?.setLabels(axisLabels());
   run();
 });

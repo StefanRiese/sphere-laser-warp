@@ -11,8 +11,8 @@ xTool Studio or LightBurn. Roller-drive kinematics is out of scope unless reques
 
 ## Layout
 
-- `core/`: pure, DOM-free TypeScript, unit-tested in Node: `projection.ts` (sphere <-> image plane, placement), `warp.ts` (resampling, footprint crop, `transpose`), `calibration.ts` (test-engraving evaluation), `vector.ts` (forward mapping and polyline warp for the vector export).
-- `web/`: Vite app. `main.ts` wires the UI; `warp.worker.ts` runs the warp; `preview3d.ts` is the three.js ball (lazy-loaded); `export.ts` (PNG with DPI, SVG), `loadImage.ts` (raster and SVG upload), `vectorWarp.ts` (vector SVG export: samples SVG geometry in the browser, maps it with `core/vector.ts`), `sample.ts` and `calibration.ts` (generated test images), `presets.ts`, `i18n.ts` + `strings.ts`, `theme.ts` (light/dark toggle, starts with the system setting; the saved theme is also applied by an inline script in `index.html` to avoid a flash).
+- `core/`: pure, DOM-free TypeScript, unit-tested in Node: `projection.ts` (sphere <-> image plane, placement), `warp.ts` (resampling, footprint crop, `transpose`), `vector.ts` (forward mapping and polyline warp for the vector export).
+- `web/`: Vite app. `main.ts` wires the UI; `warp.worker.ts` runs the warp; `preview3d.ts` is the three.js ball (lazy-loaded); `export.ts` (PNG with DPI, SVG), `loadImage.ts` (raster and SVG upload), `vectorWarp.ts` (vector SVG export: samples SVG geometry in the browser, maps it with `core/vector.ts`), `sample.ts` (generated sample image), `presets.ts`, `i18n.ts` + `strings.ts`, `theme.ts` (light/dark toggle, starts with the system setting; the saved theme is also applied by an inline script in `index.html` to avoid a flash).
 - `presets/`: machine presets as JSON (`name`, `name_de`, `description`, `params`); picked up automatically by `web/presets.ts`, validated by `core/presets.test.ts`.
 - `.github/workflows/pages.yml`: test, build and deploy to Pages on every push to `main`.
 

@@ -35,7 +35,6 @@ label.inline { flex-direction: row; align-items: center; gap: 8px; margin-bottom
 details { font-size: .9rem; }
 summary { cursor: pointer; font-weight: 600; margin-bottom: 6px; }
 details label { margin-top: 6px; }
-.steps { margin: 4px 0 6px; padding-left: 20px; color: var(--muted); font-size: .85rem; }
 header .headrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 select.langsel { padding: 4px 6px; font: inherit; }
 button.iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border-radius: 6px; border: 1px solid var(--muted); background: transparent; color: inherit; cursor: pointer; }

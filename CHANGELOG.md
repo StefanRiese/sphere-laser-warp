@@ -18,7 +18,6 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Image size defined by width or height; rotation axis direction in the image (any angle); image position along the axis; export orientation (rotation along image height or width).
 - Interactive 3D ball preview (three.js, lazy-loaded) with ball colour picker, rotation axis and rotation direction arrow, and a switch to show the original image without warp for comparison.
 - Built-in sample image, loaded on start.
-- Calibration test pattern (5 mm grid, 10 mm centre square, circles, corner squares) and a helper that evaluates a measured test engraving and suggests the real ball diameter.
 - Machine presets: JSON files in `presets/` appear in a dropdown; includes xTool M1 + RA2 Pro (chuck, axis direction 90°).
 - English / German language switch, following the browser on first visit and remembered afterwards. UI texts live in `web/strings.ts`; a test keeps both languages in sync.
 - GitHub Pages deploy workflow (tests, build, deploy).
