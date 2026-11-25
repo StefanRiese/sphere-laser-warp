@@ -9,6 +9,8 @@ Everything runs client-side as a static site on GitHub Pages. Images are never u
 
 ## Usage
 
+The interface is available in English and German (switch in the top right).
+
 1. Open the site, load an image (PNG, JPG, SVG and other browser-supported formats), enter the ball diameter and the image width on the ball.
 2. Define the image size by width or height, set which image direction runs along the rotation
    axis, and optionally move the image along the axis.

@@ -1,5 +1,6 @@
 {
   "name": "xTool M1 + RA2 Pro (chuck)",
+  "name_de": "xTool M1 + RA2 Pro (Spannfutter)",
   "description": "xTool M1 diode laser with the RA2 Pro rotary in chuck mode, using xTool Studio.",
   "params": {
     "projection": "equidistant",

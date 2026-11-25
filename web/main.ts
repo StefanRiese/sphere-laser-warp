@@ -8,6 +8,8 @@ import { loadImage } from './loadImage';
 import { canvasToPng, canvasToSvg, download } from './export';
 import type { WorkerRequest } from './warp.worker';
 import type { BallPreview } from './preview3d';
+import { applyStatic, fmt, getLang, onLangChange, setLang, t } from './i18n';
+import type { Lang } from './strings';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = $<HTMLCanvasElement>('out');
@@ -33,13 +35,14 @@ function getPreview(): Promise<BallPreview | null> {
   previewLoading ??= import('./preview3d')
     .then((m) => {
       preview = new m.BallPreview($('ball3d'));
+      preview.setLabels(axisLabels());
       preview.setBallColor($<HTMLInputElement>('ballColor').value);
       preview.setAxisVisible($<HTMLInputElement>('showAxis').checked);
       preview.setMode($<HTMLSelectElement>('previewMode').value as 'warp' | 'naive');
       return preview;
     })
     .catch(() => {
-      $('ball3d').textContent = '3D preview needs WebGL, which is not available in this browser.';
+      $('ball3d').textContent = t('webgl');
       return null;
     });
   return previewLoading;
@@ -89,7 +92,7 @@ function run(): void {
   const id = ++reqId;
   const copy = source.data.slice().buffer;
   const msg: WorkerRequest = { id, width: source.width, height: source.height, buffer: copy, params };
-  info.textContent = 'Computing...';
+  info.textContent = t('computing');
   worker.postMessage(msg, [copy]);
 }
 
@@ -122,13 +125,12 @@ worker.onmessage = (e: MessageEvent) => {
   const Rb = readParams().ballDiameterMm / 2;
   const maxLat = (Math.asin(Math.min(1, Math.max(Math.abs(r.xStart), Math.abs(r.xStart + r.widthMm)) / Rb)) * 180) / Math.PI;
   info.textContent =
-    `Image on ball: ${imgW.toFixed(1)} x ${imgH.toFixed(1)} mm, reaches ${maxLat.toFixed(0)}\u00b0 from the equator. ` +
-    `File: ${shown.width} x ${shown.height} px = ${sizeMm.w.toFixed(1)} x ${sizeMm.h.toFixed(1)} mm ` +
-    (cols ? '(circumference x axis)' : '(axis x circumference)');
+    t('infoImage', { w: fmt(imgW), h: fmt(imgH), lat: fmt(maxLat, 0) }) + ' ' +
+    t('infoFile', { pw: shown.width, ph: shown.height, mw: fmt(sizeMm.w), mh: fmt(sizeMm.h) }) + ' ' +
+    t(cols ? 'unitsCircAxis' : 'unitsAxisCirc');
+  updateFileHint();
   warn.hidden = !r.clipped;
-  warn.textContent = r.clipped
-    ? 'Part of the image does not fit on the visible side of the ball and was cut off. Reduce the image size or move it.'
-    : '';
+  warn.textContent = r.clipped ? t('clipped') : '';
   dlPng.disabled = dlSvg.disabled = false;
 
   const p = readParams();
@@ -163,7 +165,7 @@ $<HTMLInputElement>('file').addEventListener('change', async (e) => {
     run();
   } catch (err) {
     warn.hidden = false;
-    warn.textContent = err instanceof Error ? err.message : 'Could not load the file';
+    warn.textContent = err instanceof Error ? t(err.message) : t('errLoad');
   }
 });
 
@@ -187,8 +189,12 @@ sizeBy.addEventListener('change', () => {
     const h = (w * source.height) / source.width;
     input.value = String(Math.round((sizeBy.value === 'width' ? w : h) * 100) / 100);
   }
-  $('sizeLabel').textContent = sizeBy.value === 'width' ? 'Image width on ball (mm)' : 'Image height on ball (mm)';
+  updateSizeLabel();
 });
+
+function updateSizeLabel(): void {
+  $('sizeLabel').textContent = t(sizeBy.value === 'width' ? 'sizeLabelWidth' : 'sizeLabelHeight');
+}
 
 function imageWidthMmFor(prevMode: 'width' | 'height', input: HTMLInputElement): number {
   const v = parseFloat(input.value) || DEFAULT_PARAMS.imageWidthMm;
@@ -197,8 +203,14 @@ function imageWidthMmFor(prevMode: 'width' | 'height', input: HTMLInputElement):
 
 // --- machine presets ---
 const presetSel = $<HTMLSelectElement>('preset');
-presetSel.add(new Option('Custom (no preset)', ''));
-presets.forEach((p, i) => presetSel.add(new Option(p.name, String(i))));
+function buildPresetOptions(): void {
+  const keep = presetSel.value;
+  presetSel.length = 0;
+  presetSel.add(new Option(t('custom'), ''));
+  presets.forEach((p, i) => presetSel.add(new Option(getLang() === 'de' ? (p.name_de ?? p.name) : p.name, String(i))));
+  presetSel.value = keep;
+}
+buildPresetOptions();
 
 function setField(id: string, value: string | number | boolean | undefined): void {
   if (value === undefined) return;
@@ -296,16 +308,13 @@ function evaluateCalibration(): void {
     measuredAxisMm: axis > 0 ? axis : target,
     measuredAroundMm: around > 0 ? around : target,
   });
-  const pct = (v: number) => `${(v * 100).toFixed(1)} %`;
-  const lines = [`Target: ${target.toFixed(1)} mm.`];
+  const pct = (v: number) => `${fmt(v * 100)} %`;
+  const lines = [t('calTarget', { t: fmt(target) })];
   if (axis > 0) {
-    lines.push(
-      `Along the axis: ${pct(r.axisRatio)} of target.` +
-        (Math.abs(r.axisRatio - 1) > 0.01 ? ' This is a machine matter (X scale or focus), not the ball diameter.' : ''),
-    );
+    lines.push(t('calAxis', { pct: pct(r.axisRatio) }) + (Math.abs(r.axisRatio - 1) > 0.01 ? ' ' + t('calMachine') : ''));
   }
   if (around > 0) {
-    lines.push(`Around the ball: ${pct(r.aroundRatio)} of target, so the real ball diameter is about ${r.suggestedBallDiameterMm.toFixed(1)} mm.`);
+    lines.push(t('calAround', { pct: pct(r.aroundRatio), d: fmt(r.suggestedBallDiameterMm) }));
     if (Math.abs(r.aroundRatio - 1) > 0.005) {
       suggestedDiameter = r.suggestedBallDiameterMm;
       apply.hidden = false;
@@ -327,3 +336,25 @@ $('applyDiameter').addEventListener('click', () => {
 sourceName = 'sample';
 setSource(makeSample());
 run();
+
+// --- language ---
+const axisLabels = () => ({ plus: t('labelAxisPlus'), minus: t('labelAxisMinus'), turns: t('labelBallTurns') });
+
+function updateFileHint(): void {
+  $('fileHint').textContent = t($<HTMLSelectElement>('orientation').value === 'cols' ? 'fileHintCols' : 'fileHintRows');
+}
+
+const langSel = $<HTMLSelectElement>('lang');
+langSel.value = getLang();
+langSel.addEventListener('change', () => setLang(langSel.value as Lang));
+onLangChange(() => {
+  buildPresetOptions();
+  updateSizeLabel();
+  updateFileHint();
+  evaluateCalibration();
+  preview?.setLabels(axisLabels());
+  run();
+});
+applyStatic();
+updateSizeLabel();
+updateFileHint();

@@ -33,6 +33,8 @@ export class BallPreview {
   private warpMesh: THREE.Mesh | null = null;
   private naiveMesh: THREE.Mesh | null = null;
   private mode: 'warp' | 'naive' = 'warp';
+  private labels = { plus: 'axis +', minus: 'axis -', turns: 'ball turns' };
+  private axisArgs: { R: number; sign: 1 | -1 } | null = null;
   private axis: THREE.Group | null = null;
   private showAxis = true;
   private color = '#9b1c1c';
@@ -85,6 +87,7 @@ export class BallPreview {
       });
     }
     this.applyMode();
+    this.axisArgs = { R: info.R, sign: info.rotationSign };
     this.rebuildAxis(info.R, info.rotationSign);
     this.render();
   }
@@ -98,6 +101,13 @@ export class BallPreview {
   private applyMode(): void {
     if (this.warpMesh) this.warpMesh.visible = this.mode === 'warp';
     if (this.naiveMesh) this.naiveMesh.visible = this.mode === 'naive';
+  }
+
+  /** Translated texts for the axis labels; rebuilds them if the axis is already shown. */
+  setLabels(l: { plus: string; minus: string; turns: string }): void {
+    this.labels = l;
+    if (this.axisArgs) this.rebuildAxis(this.axisArgs.R, this.axisArgs.sign);
+    this.render();
   }
 
   setAxisVisible(visible: boolean): void {
@@ -257,7 +267,7 @@ export class BallPreview {
       cone.position.x = s * (L + R * 0.05);
       cone.rotation.z = -s * (Math.PI / 2); // tip points away from the ball
       g.add(cone);
-      const lab = this.label(s > 0 ? 'axis +' : 'axis -', R);
+      const lab = this.label(s > 0 ? this.labels.plus : this.labels.minus, R);
       lab.position.set(s * (L + R * 0.45), R * 0.14, 0);
       g.add(lab);
     }
@@ -281,7 +291,7 @@ export class BallPreview {
     head.position.copy(tip);
     head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
     g.add(head);
-    const rl = this.label('ball turns', R);
+    const rl = this.label(this.labels.turns, R);
     rl.position.set(x0, rho + R * 0.18, 0);
     g.add(rl);
 

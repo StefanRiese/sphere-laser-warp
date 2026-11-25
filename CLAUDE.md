@@ -30,6 +30,7 @@ xTool Creative Space or LightBurn. Roller-drive kinematics is out of scope unles
 
 ## Conventions
 
+- All user-facing text goes through `web/strings.ts` (English and German); use `data-i18n` in HTML or `t()` in code. `core/i18n.test.ts` checks key parity and that every `data-i18n` key exists.
 - No backend, no uploads, no tracking. Everything runs in the browser.
 - Keep `core/` free of DOM and browser APIs so it can be tested in Node.
 - Heavy resampling runs in a Web Worker.

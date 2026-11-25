@@ -13,6 +13,8 @@ export interface PresetParams {
 
 export interface Preset {
   name: string;
+  /** German display name; falls back to `name`. */
+  name_de?: string;
   description: string;
   params: PresetParams;
 }

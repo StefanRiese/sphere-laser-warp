@@ -13,7 +13,7 @@ function parseLen(v: string | null): number | null {
 function prepareSvg(text: string, targetSide: number): string {
   const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
   const svg = doc.documentElement;
-  if (svg.localName !== 'svg' || doc.querySelector('parsererror')) throw new Error('Invalid SVG file');
+  if (svg.localName !== 'svg' || doc.querySelector('parsererror')) throw new Error('errInvalidSvg');
 
   let w = 0;
   let h = 0;
@@ -24,7 +24,7 @@ function prepareSvg(text: string, targetSide: number): string {
     w = parseLen(svg.getAttribute('width')) ?? 0;
     h = parseLen(svg.getAttribute('height')) ?? 0;
   }
-  if (!w || !h) throw new Error('SVG has no usable size (needs a viewBox or width and height)');
+  if (!w || !h) throw new Error('errSvgSize');
   if (!svg.hasAttribute('viewBox')) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
   const scale = targetSide / Math.max(w, h);
@@ -37,7 +37,7 @@ function decode(url: string): Promise<HTMLImageElement> {
   return new Promise((res, rej) => {
     const img = new Image();
     img.onload = () => res(img);
-    img.onerror = () => rej(new Error('Could not decode the image'));
+    img.onerror = () => rej(new Error('errDecode'));
     img.src = url;
   });
 }

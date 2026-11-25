@@ -13,6 +13,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Latitude limit and its 3D overlay. The output is cropped to the image footprint; the info line shows how far from the equator the image reaches.
 
 ### Added
+- Language switch (English / German). The language follows the browser on first visit and is remembered. UI texts live in `web/strings.ts`; a test keeps both languages in sync.
 - Calibration test pattern (5 mm grid, 10 mm centre square, circles, corner squares) and a helper that evaluates a measured test engraving and suggests the real ball diameter.
 - Built-in sample image (grid, circles, face), loaded on start, and a 3D preview switch to show the original image without warp for comparison.
 - Machine presets: JSON files in `presets/` are offered in a dropdown; includes xTool M1 + RA2 Pro (chuck).
