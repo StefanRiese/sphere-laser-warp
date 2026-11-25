@@ -6,7 +6,8 @@ Guidance for working in this repository.
 
 Sphere Laser Warp: a static, client-side website (GitHub Pages) that pre-warps a flat
 image so it looks undistorted when laser-engraved on a ball with a rotary unit.
-Primary hardware: xTool M1 + RA2 Pro, via xTool Creative Space or LightBurn.
+Primary hardware: xTool M1 + RA2 Pro in chuck mode (direct rotation, no rollers), via
+xTool Creative Space or LightBurn. Roller-drive kinematics is out of scope unless requested.
 
 ## Planned layout
 

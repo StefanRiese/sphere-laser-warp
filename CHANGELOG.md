@@ -8,3 +8,4 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 - Initial repository with MIT license, README, changelog and CLAUDE.md.
+- Scope decision: chuck-driven rotary only; roller kinematics deferred.

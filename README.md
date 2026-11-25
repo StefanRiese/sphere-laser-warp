@@ -29,15 +29,16 @@ warning overlay for that zone.
 
 ## Target hardware
 
-Developed for an **xTool M1** with an **RA2 Pro** rotary, using xTool Creative Space
-or LightBurn in rotary mode. Other gantry or rotary setups should work through the
+Developed for an **xTool M1** with an **RA2 Pro** rotary in **chuck mode** (the ball is
+clamped and rotated directly, no rollers), using xTool Creative Space or LightBurn in
+rotary mode. Other gantry or rotary setups should work through the
 generic PNG export.
 
 ## Planned features
 
 - [ ] M1: image upload, parameter form, live pre-warped preview, PNG export
 - [ ] M2: 3D ball preview, extra projections, latitude-limit overlay
-- [ ] M3: G-code export, machine presets (xTool M1 + RA2 Pro first), roller-drive maths
+- [ ] M3: G-code export, machine presets (xTool M1 + RA2 Pro chuck first); roller-drive maths is out of scope for now
 - [ ] M4: SVG path warp, tiled-cap mode for large images
 - [ ] M5: calibration test pattern and fitting
 
