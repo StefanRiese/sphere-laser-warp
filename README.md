@@ -93,6 +93,10 @@ Pushes to `main` run the tests and deploy to GitHub Pages through GitHub Actions
 
 Out of scope: G-code generation and roller-drive rotaries.
 
+## Support
+
+The tool is free. If it saved you some test balls, you can [donate via PayPal.me](https://www.paypal.me/stefanriese) (the "Donate" / "Spenden" button on the site does the same).
+
 ## Contributing
 
 Issues and presets for other machines are welcome.

@@ -31,3 +31,6 @@ details label { margin-top: 6px; }
 header .headrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 label.lang { flex-direction: row; align-items: center; gap: 8px; }
 label.lang select { padding: 4px 6px; font: inherit; }
+.headtools { display: flex; align-items: center; gap: 14px; }
+a.donate { padding: 6px 14px; border-radius: 6px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; font-size: .9rem; }
+a.donate:hover { filter: brightness(1.1); }
