@@ -42,13 +42,6 @@ Text must be converted to outlines first; text, images, `<use>`, gradients, patt
 masks are not exported and the tool says so. The same size, axis direction, offset and orientation
 settings apply.
 
-### Calibration
-
-Click **Calibration pattern** (40 mm wide: 5 mm grid, 10 mm centre square, circles, corner
-squares), engrave it, then measure the centre square along the axis and around the ball and
-enter the values under **Check a test engraving**. The tool reports both ratios and suggests the
-real ball diameter. A deviation along the axis points at the machine (X scale, focus), not the ball.
-
 ## Result
 
 The same logo engraved on a matte red glass bauble with an xTool M1 + RA2 Pro: left with the
