@@ -9,7 +9,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ### Added
 - "GitHub" link in the header pointing to the repository.
 - Site icon (favicon, also shown next to the title in the header) and status badges in the README.
-- Theme switch (System / Light / Dark), remembered across visits; the dark theme now has readable button text.
+- Theme switch (sun/moon icon button, light/dark; starts with the system setting), remembered across visits; the dark theme now has readable button text.
 - "Donate" / "Spenden" button in the header linking to the maintainer's PayPal.me page.
 - Vector export: for an uploaded SVG, "Download vector SVG (paths)" warps the paths onto the ball and writes them as polylines in mm (fills, strokes, fill rules and holes kept; constant stroke width; unsupported content is reported).
 - Warp core (`core/`): equidistant, stereographic and equal-area projections, bilinear resampling, with unit tests.

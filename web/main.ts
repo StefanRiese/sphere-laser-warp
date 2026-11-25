@@ -11,7 +11,7 @@ import type { WorkerRequest } from './warp.worker';
 import type { BallPreview } from './preview3d';
 import { applyStatic, fmt, getLang, onLangChange, setLang, t } from './i18n';
 import type { Lang } from './strings';
-import { getTheme, setTheme, type Theme } from './theme';
+import { effectiveTheme, setTheme } from './theme';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = $<HTMLCanvasElement>('out');
@@ -385,6 +385,11 @@ updateSizeLabel();
 updateFileHint();
 
 // --- theme ---
-const themeSel = $<HTMLSelectElement>('theme');
-themeSel.value = getTheme();
-themeSel.addEventListener('change', () => setTheme(themeSel.value as Theme));
+const themeBtn = $<HTMLButtonElement>('theme');
+const showTheme = () => { themeBtn.dataset.mode = effectiveTheme(); };
+showTheme();
+themeBtn.addEventListener('click', () => {
+  setTheme(effectiveTheme() === 'dark' ? 'light' : 'dark');
+  showTheme();
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', showTheme);

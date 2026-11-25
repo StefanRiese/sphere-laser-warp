@@ -34,8 +34,13 @@ summary { cursor: pointer; font-weight: 600; margin-bottom: 6px; }
 details label { margin-top: 6px; }
 .steps { margin: 4px 0 6px; padding-left: 20px; color: var(--muted); font-size: .85rem; }
 header .headrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-label.lang, label.theme { flex-direction: row; align-items: center; gap: 8px; }
-label.lang select, label.theme select { padding: 4px 6px; font: inherit; }
+select.langsel { padding: 4px 6px; font: inherit; }
+button.iconbtn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border-radius: 6px; border: 1px solid var(--muted); background: transparent; color: inherit; cursor: pointer; }
+button.iconbtn:hover { border-color: var(--accent); }
+/* show the icon of the look you get on click: sun while dark, moon while light */
+button.iconbtn .i-sun { display: none; }
+button.iconbtn[data-mode="dark"] .i-sun { display: inline; }
+button.iconbtn[data-mode="dark"] .i-moon { display: none; }
 .headtools { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 14px; }
 a.donate { padding: 6px 14px; border-radius: 6px; background: var(--accent); color: var(--on-accent); text-decoration: none; font-weight: 600; font-size: .9rem; }
 a.donate:hover { filter: brightness(1.1); }

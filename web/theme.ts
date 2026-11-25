@@ -23,3 +23,10 @@ export function setTheme(theme: Theme): void {
     /* ignore */
   }
 }
+
+/** The look in effect right now: the saved choice, or the system setting. */
+export function effectiveTheme(): 'light' | 'dark' {
+  const t = getTheme();
+  if (t !== 'auto') return t;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}

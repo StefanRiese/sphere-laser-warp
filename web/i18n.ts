@@ -36,6 +36,12 @@ export function applyStatic(): void {
   document.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {
     el.textContent = t(el.dataset.i18n as Key);
   });
+  // icon-only controls: the text goes into aria-label and the tooltip
+  document.querySelectorAll<HTMLElement>('[data-i18n-label]').forEach((el) => {
+    const label = t(el.dataset.i18nLabel as Key);
+    el.setAttribute('aria-label', label);
+    el.title = label;
+  });
 }
 
 export function setLang(next: Lang): void {
