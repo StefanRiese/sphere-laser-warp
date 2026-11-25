@@ -5,7 +5,26 @@ A browser tool that pre-distorts a flat image so that, once engraved on a ball
 
 Everything runs client-side as a static site on GitHub Pages. Images are never uploaded.
 
-> **Status:** planning. No code yet, see [CHANGELOG.md](CHANGELOG.md) and the roadmap below.
+> **Status:** M1 implemented (upload, warp preview, PNG/SVG export). See [CHANGELOG.md](CHANGELOG.md).
+
+## Usage
+
+1. Open the site, load an image, enter the ball diameter and the image width on the ball.
+2. Download the **PNG** (carries the DPI, so it imports at the right size) or the **SVG**
+   (physical size in mm, raster embedded) and import it in xTool Studio / LightBurn.
+3. In rotary mode set the object diameter to the ball diameter. The image width runs along
+   the rotation axis, the image height wraps around the ball.
+
+Import behaviour of the SVG in xTool Studio is untested; use the PNG if it misbehaves.
+
+## Development
+
+```sh
+npm install
+npm run dev     # local dev server
+npm test        # unit tests for core/
+npm run build   # typecheck + production build into dist/
+```
 
 ## The problem
 
@@ -36,7 +55,7 @@ generic PNG export.
 
 ## Planned features
 
-- [ ] M1: image upload, parameter form, live pre-warped preview, PNG export
+- [x] M1: image upload, parameter form, live pre-warped preview, PNG and SVG export
 - [ ] M2: 3D ball preview, extra projections, latitude-limit overlay
 - [ ] M3: G-code export, machine presets (xTool M1 + RA2 Pro chuck first); roller-drive maths is out of scope for now
 - [ ] M4: SVG path warp, tiled-cap mode for large images
