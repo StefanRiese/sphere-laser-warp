@@ -3,7 +3,6 @@
 export interface PresetParams {
   ballDiameterMm?: number;
   projection?: 'equidistant' | 'stereographic' | 'equalarea';
-  latitudeLimitDeg?: number;
   dpi?: number;
   orientation?: 'rows' | 'cols';
   axisAngleDeg?: number;

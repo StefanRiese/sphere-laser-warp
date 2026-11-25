@@ -10,10 +10,20 @@ function solid(w: number, h: number, rgba: [number, number, number, number]): RG
 describe('warp', () => {
   const base = { ...DEFAULT_PARAMS, dpi: 100 };
 
-  it('produces an output sized from the latitude limit and the image footprint', () => {
-    const r = warp(solid(40, 40, [255, 0, 0, 255]), { ...base, imageWidthMm: 20, latitudeLimitDeg: 30 });
-    const R = base.ballDiameterMm / 2;
-    expect(r.widthMm).toBeCloseTo(2 * R * Math.sin(Math.PI / 6), 0);
+  it('crops the output to the image footprint, no padding', () => {
+    const r = warp(solid(40, 40, [255, 0, 0, 255]), { ...base, imageWidthMm: 20 });
+    // a 20 mm wide image spans about 20 mm along the axis (slightly less: x = R sin(c))
+    expect(r.widthMm).toBeGreaterThan(19);
+    expect(r.widthMm).toBeLessThan(21);
+    // every output row and column contains image data
+    const alphaAt = (x: number, y: number) => r.data[(y * r.width + x) * 4 + 3] ?? 0;
+    const anyIn = (xs: number[], ys: number[]) => xs.some((x) => ys.some((y) => alphaAt(x, y) > 0));
+    const allY = Array.from({ length: r.height }, (_, i) => i);
+    const allX = Array.from({ length: r.width }, (_, i) => i);
+    expect(anyIn([0], allY)).toBe(true);
+    expect(anyIn([r.width - 1], allY)).toBe(true);
+    expect(anyIn(allX, [0])).toBe(true);
+    expect(anyIn(allX, [r.height - 1])).toBe(true);
     // a 20 mm square image spans roughly 20 mm around the circumference
     expect(r.heightMm).toBeGreaterThan(19);
     expect(r.heightMm).toBeLessThan(25);
@@ -21,8 +31,7 @@ describe('warp', () => {
   });
 
   it('stretches the image around the ball less than along it near the poles of the axis', () => {
-    // At the latitude limit, columns are compressed (1/cos) in the source relative to the output:
-    // the image occupies fewer output rows at the edge columns than ... centre rows are widest.
+    // Away from the centre of the axis the circles of latitude are shorter, so more rotation is needed.
     const r = warp(solid(40, 40, [0, 255, 0, 255]), { ...base, imageWidthMm: 30 });
     const colHeight = (col: number) => {
       let n = 0;
@@ -30,12 +39,12 @@ describe('warp', () => {
       return n;
     };
     const mid = colHeight(Math.floor(r.width / 2));
-    const edge = colHeight(Math.floor(r.width * 0.12));
+    const edge = colHeight(Math.floor(r.width * 0.08));
     expect(edge).toBeGreaterThan(mid); // more rotation needed per mm of image width at higher latitude
   });
 
-  it('flags clipping when the image exceeds the latitude limit', () => {
-    const r = warp(solid(10, 10, [0, 0, 255, 255]), { ...base, imageWidthMm: 60, latitudeLimitDeg: 20 });
+  it('flags clipping when the image does not fit on the visible side of the ball', () => {
+    const r = warp(solid(10, 10, [0, 0, 255, 255]), { ...base, imageWidthMm: 200 });
     expect(r.clipped).toBe(true);
   });
 
@@ -69,10 +78,14 @@ describe('warp', () => {
 
   it('offsetAxisMm moves the image along the rotation axis', () => {
     const img = solid(20, 20, [255, 0, 0, 255]);
-    const a = centroid(warp(img, { ...base, imageWidthMm: 10 }));
-    const b = warp(img, { ...base, imageWidthMm: 10, offsetAxisMm: 8 });
-    expect((centroid(b).x - a.x) * b.mmPerPx).toBeGreaterThan(7);
-    expect((centroid(b).x - a.x) * b.mmPerPx).toBeLessThan(9);
+    const ra = warp(img, { ...base, imageWidthMm: 10 });
+    const rb = warp(img, { ...base, imageWidthMm: 10, offsetAxisMm: 8 });
+    // output is cropped, so compare absolute axis positions: xStart + centroid
+    const posA = ra.xStart + centroid(ra).x * ra.mmPerPx;
+    const posB = rb.xStart + centroid(rb).x * rb.mmPerPx;
+    expect(posA).toBeCloseTo(0, 0);
+    expect(posB - posA).toBeGreaterThan(7);
+    expect(posB - posA).toBeLessThan(9);
   });
 
   it('axisAngleDeg 90 makes the image height run along the axis', () => {

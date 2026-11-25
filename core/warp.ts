@@ -12,8 +12,6 @@ export interface WarpParams {
   /** Width of the image as it should appear on the ball surface, in mm. Height follows the aspect ratio. */
   imageWidthMm: number;
   projection: Projection;
-  /** Maximum latitude (deg) from the equator along the rotation axis; columns beyond it are not produced. */
-  latitudeLimitDeg: number;
   /** Output resolution in pixels per inch. */
   dpi: number;
   /** Mirror the image (e.g. engraving the inside of a bauble). */
@@ -31,18 +29,19 @@ export interface WarpResult extends RGBAImage {
   /** Physical size of the output in mm: width along the rotation axis, height around the circumference. */
   widthMm: number;
   heightMm: number;
-  /** True if the image extends beyond the latitude limit or the visible hemisphere and was cut off. */
+  /** True if part of the image could not be placed on the ball (beyond the hemisphere around the image centre). */
   clipped: boolean;
   /** Rotation angle (rad) at the top edge of the output and the signed angle covered by its full height. */
   theta0: number;
   thetaSpan: number;
+  /** Axis position (mm from the ball centre) of the output's left edge. */
+  xStart: number;
 }
 
 export const DEFAULT_PARAMS: WarpParams = {
   ballDiameterMm: 70,
   imageWidthMm: 40,
   projection: 'equidistant',
-  latitudeLimitDeg: 30,
   dpi: 254,
   mirror: false,
   flipRotation: false,
@@ -79,13 +78,19 @@ function sampleBilinear(src: RGBAImage, fx: number, fy: number, out: Uint8Clampe
   }
 }
 
-/** True if the image border leaves the visible hemisphere or the latitude limit (|x| > xMax). */
-function footprintClipped(
-  proj: Projection, R: number, w: number, h: number, xMax: number, alpha: number, pl: Placement,
-): boolean {
+/**
+ * Extent of the image footprint along the rotation axis (mm), from its border. `clipped` is true if part of
+ * the border cannot be placed on the ball (it would lie beyond the hemisphere around the image centre).
+ */
+function footprint(
+  proj: Projection, R: number, w: number, h: number, alpha: number, pl: Placement,
+): { xa: number; xb: number; clipped: boolean } | null {
   const ca = Math.cos(alpha);
   const sa = Math.sin(alpha);
-  const N = 64;
+  const N = 128;
+  let xa = Infinity;
+  let xb = -Infinity;
+  let clipped = false;
   for (let i = 0; i <= N; i++) {
     const t = i / N;
     const pts: Array<[number, number]> = [
@@ -97,10 +102,15 @@ function footprintClipped(
     for (const [ui, vi] of pts) {
       // image coordinates -> sphere plane (inverse of the axis rotation)
       const s = planeToSurface(proj, R, ui * ca + vi * sa, -ui * sa + vi * ca, pl);
-      if (!s || Math.abs(s.x) > xMax) return true;
+      if (!s) {
+        clipped = true;
+        continue;
+      }
+      xa = Math.min(xa, s.x);
+      xb = Math.max(xb, s.x);
     }
   }
-  return false;
+  return xa <= xb ? { xa, xb, clipped } : null;
 }
 
 /**
@@ -108,13 +118,12 @@ function footprintClipped(
  *
  * Output layout: columns = position along the rotation axis, rows = rotation angle
  * (i.e. the image height equals the circumference slice, which is how XCS / LightBurn
- * rotary mode expects it). Row 0 is the edge with the smallest theta.
+ * rotary mode expects it). Row 0 is the edge with the smallest theta. The output is cropped
+ * to the area the image actually covers; it is never padded.
  */
 export function warp(src: RGBAImage, p: WarpParams): WarpResult {
   const R = p.ballDiameterMm / 2;
   const mmPerPx = 25.4 / p.dpi;
-  const xMax = R * Math.sin((p.latitudeLimitDeg * Math.PI) / 180);
-  const width = Math.max(1, Math.round((2 * xMax) / mmPerPx));
   const fullRows = Math.max(1, Math.round((2 * Math.PI * R) / mmPerPx));
 
   const imgW = p.imageWidthMm;
@@ -128,14 +137,26 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
     theta: 0,
   };
 
-  // Pass 1: find which rows (rotation angles) contain any part of the image, so we only emit those.
+  const empty: WarpResult = {
+    data: new Uint8ClampedArray(4), width: 1, height: 1, mmPerPx, widthMm: mmPerPx, heightMm: mmPerPx,
+    clipped: true, theta0: 0, thetaSpan: 0, xStart: 0,
+  };
+  const fp = footprint(p.projection, R, imgW, imgH, alpha, pl);
+  if (!fp) return empty;
+
+  // the window along the axis is exactly the image footprint, nothing more
+  const xa = Math.max(-R, fp.xa);
+  const xb = Math.min(R, fp.xb);
+  const width = Math.max(1, Math.ceil((xb - xa) / mmPerPx));
+
   const rowHasData = new Uint8Array(fullRows);
+  const colHasData = new Uint8Array(width);
   const full = new Uint8ClampedArray(width * fullRows * 4);
 
   for (let row = 0; row < fullRows; row++) {
     const theta = pl.theta + sgn * (((row + 0.5) / fullRows) * 2 * Math.PI - Math.PI);
     for (let col = 0; col < width; col++) {
-      const x = ((col + 0.5) / width) * 2 * xMax - xMax;
+      const x = xa + (col + 0.5) * mmPerPx;
       const q = surfaceToPlane(p.projection, R, x, theta, pl);
       if (!q) continue;
       // rotate so the chosen image direction runs along the axis, then optionally mirror
@@ -147,31 +168,40 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
       if (fx < 0 || fy < 0 || fx > src.width || fy > src.height) continue;
       const o = (row * width + col) * 4;
       sampleBilinear(src, fx, fy, full, o);
-      if ((full[o + 3] ?? 0) > 0) rowHasData[row] = 1;
+      if ((full[o + 3] ?? 0) > 0) {
+        rowHasData[row] = 1;
+        colHasData[col] = 1;
+      }
     }
   }
 
-  let first = -1;
-  let last = -1;
-  for (let row = 0; row < fullRows; row++) {
-    if (rowHasData[row]) {
-      if (first < 0) first = row;
-      last = row;
+  const range = (flags: Uint8Array): [number, number] => {
+    let lo = -1;
+    let hi = -1;
+    for (let i = 0; i < flags.length; i++) {
+      if (flags[i]) {
+        if (lo < 0) lo = i;
+        hi = i;
+      }
     }
-  }
-  if (first < 0) {
-    return { data: new Uint8ClampedArray(4), width: 1, height: 1, mmPerPx, widthMm: mmPerPx, heightMm: mmPerPx, clipped: true, theta0: 0, thetaSpan: 0 };
-  }
+    return [lo, hi];
+  };
+  const [r0, r1] = range(rowHasData);
+  const [c0, c1] = range(colHasData);
+  if (r0 < 0 || c0 < 0) return empty;
 
-  const clipped = footprintClipped(p.projection, R, imgW, imgH, xMax, alpha, pl);
-
-  const height = last - first + 1;
-  const data = full.slice(first * width * 4, (last + 1) * width * 4);
+  const outW = c1 - c0 + 1;
+  const height = r1 - r0 + 1;
+  const data = new Uint8ClampedArray(outW * height * 4);
+  for (let row = 0; row < height; row++) {
+    const from = ((r0 + row) * width + c0) * 4;
+    data.set(full.subarray(from, from + outW * 4), row * outW * 4);
+  }
   const dTheta = sgn * ((2 * Math.PI) / fullRows);
-  const theta0 = pl.theta + sgn * ((first / fullRows) * 2 * Math.PI - Math.PI);
+  const theta0 = pl.theta + sgn * ((r0 / fullRows) * 2 * Math.PI - Math.PI);
   return {
-    data, width, height, mmPerPx, widthMm: width * mmPerPx, heightMm: height * mmPerPx, clipped,
-    theta0, thetaSpan: dTheta * height,
+    data, width: outW, height, mmPerPx, widthMm: outW * mmPerPx, heightMm: height * mmPerPx, clipped: fp.clipped,
+    theta0, thetaSpan: dTheta * height, xStart: xa + c0 * mmPerPx,
   };
 }
 

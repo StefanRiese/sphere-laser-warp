@@ -5,11 +5,10 @@
     "The RA2 Pro replaces the Y axis, so the rotation runs along the image height.",
     "In rotary mode set the object diameter to the ball diameter.",
     "A diode laser marks coatings and paint, not clear glass: engrave the coating on the bauble or a painted layer.",
-    "Focus on the top of the ball. Keep the latitude limit modest, the spot defocuses and stretches away from the top."
+    "Focus on the top of the ball. Keep the image small: the spot defocuses and stretches away from the top of the ball."
   ],
   "params": {
     "projection": "equidistant",
-    "latitudeLimitDeg": 30,
     "dpi": 254,
     "orientation": "rows",
     "axisAngleDeg": 0,

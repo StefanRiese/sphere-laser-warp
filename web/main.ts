@@ -1,6 +1,7 @@
 import { DEFAULT_PARAMS, type WarpParams, transpose } from '../core/warp';
 import type { Projection } from '../core/projection';
 import { presets, type PresetParams } from './presets';
+import { makeSample } from './sample';
 import { loadImage } from './loadImage';
 import { canvasToPng, canvasToSvg, download } from './export';
 import type { WorkerRequest } from './warp.worker';
@@ -20,6 +21,7 @@ let reqId = 0;
 let sizeMm = { w: 0, h: 0 };
 let currentDpi = DEFAULT_PARAMS.dpi;
 const rawCanvas = document.createElement('canvas'); // warped result without background, for the 3D texture
+const srcCanvas = document.createElement('canvas'); // the original image, for the "without warp" 3D view
 let preview: BallPreview | null = null;
 let previewLoading: Promise<BallPreview | null> | null = null;
 
@@ -29,8 +31,8 @@ function getPreview(): Promise<BallPreview | null> {
     .then((m) => {
       preview = new m.BallPreview($('ball3d'));
       preview.setBallColor($<HTMLInputElement>('ballColor').value);
-      preview.setLimitVisible($<HTMLInputElement>('showLimit').checked);
       preview.setAxisVisible($<HTMLInputElement>('showAxis').checked);
+      preview.setMode($<HTMLSelectElement>('previewMode').value as 'warp' | 'naive');
       return preview;
     })
     .catch(() => {
@@ -63,7 +65,6 @@ function readParams(): WarpParams {
     ballDiameterMm: num('ballDiameterMm', DEFAULT_PARAMS.ballDiameterMm),
     imageWidthMm: imageWidthMm(),
     projection: $<HTMLSelectElement>('projection').value as Projection,
-    latitudeLimitDeg: Math.min(80, num('latitudeLimitDeg', DEFAULT_PARAMS.latitudeLimitDeg)),
     dpi: num('dpi', DEFAULT_PARAMS.dpi),
     mirror: $<HTMLInputElement>('mirror').checked,
     flipRotation: $<HTMLInputElement>('flipRotation').checked,
@@ -115,26 +116,37 @@ worker.onmessage = (e: MessageEvent) => {
   sizeMm = cols ? { w: r.heightMm, h: r.widthMm } : { w: r.widthMm, h: r.heightMm };
   const imgW = readParams().imageWidthMm;
   const imgH = source ? (imgW * source.height) / source.width : imgW;
+  const Rb = readParams().ballDiameterMm / 2;
+  const maxLat = (Math.asin(Math.min(1, Math.max(Math.abs(r.xStart), Math.abs(r.xStart + r.widthMm)) / Rb)) * 180) / Math.PI;
   info.textContent =
-    `Image on ball: ${imgW.toFixed(1)} x ${imgH.toFixed(1)} mm. ` +
+    `Image on ball: ${imgW.toFixed(1)} x ${imgH.toFixed(1)} mm, reaches ${maxLat.toFixed(0)}\u00b0 from the equator. ` +
     `File: ${shown.width} x ${shown.height} px = ${sizeMm.w.toFixed(1)} x ${sizeMm.h.toFixed(1)} mm ` +
     (cols ? '(circumference x axis)' : '(axis x circumference)');
   warn.hidden = !r.clipped;
   warn.textContent = r.clipped
-    ? 'The image extends beyond the latitude limit or the visible side of the ball and was cut off. Reduce the image size, move it, or raise the limit.'
+    ? 'Part of the image does not fit on the visible side of the ball and was cut off. Reduce the image size or move it.'
     : '';
   dlPng.disabled = dlSvg.disabled = false;
 
   const p = readParams();
   void getPreview().then((pv) =>
     pv?.update(
-      { R: p.ballDiameterMm / 2, xMax: r.widthMm / 2, theta0: r.theta0, thetaSpan: r.thetaSpan, latitudeLimitDeg: p.latitudeLimitDeg, rotationSign: p.flipRotation ? -1 : 1 },
+      { R: p.ballDiameterMm / 2, xStart: r.xStart, widthMm: r.widthMm, theta0: r.theta0, thetaSpan: r.thetaSpan, rotationSign: p.flipRotation ? -1 : 1 },
       rawCanvas,
+      source
+        ? {
+            canvas: srcCanvas,
+            widthMm: imgW,
+            heightMm: imgH,
+            offsetAxisMm: p.offsetAxisMm,
+            mirror: p.mirror,
+            rotationSign: p.flipRotation ? -1 : 1,
+          }
+        : null,
     ),
   );
 };
 
-$<HTMLInputElement>('showLimit').addEventListener('input', (e) => preview?.setLimitVisible((e.target as HTMLInputElement).checked));
 $<HTMLInputElement>('showAxis').addEventListener('input', (e) => preview?.setAxisVisible((e.target as HTMLInputElement).checked));
 $<HTMLInputElement>('ballColor').addEventListener('input', (e) => preview?.setBallColor((e.target as HTMLInputElement).value));
 
@@ -146,7 +158,7 @@ $<HTMLInputElement>('file').addEventListener('change', async (e) => {
     const p = readParams();
     // pixels needed along the longest image side at the chosen dpi (for SVG rasterisation)
     const needed = (Math.max(p.imageWidthMm, p.imageWidthMm * (source ? source.height / source.width : 1)) / 25.4) * p.dpi * 1.5;
-    source = await loadImage(f, needed);
+    setSource(await loadImage(f, needed));
     run();
   } catch (err) {
     warn.hidden = false;
@@ -154,7 +166,7 @@ $<HTMLInputElement>('file').addEventListener('change', async (e) => {
   }
 });
 
-document.querySelectorAll('.controls input:not(#file):not(#ballColor):not(#showLimit):not(#showAxis), .controls select').forEach((el) =>
+document.querySelectorAll('.controls input:not(#file):not(#ballColor):not(#showAxis), .controls select').forEach((el) =>
   el.addEventListener('input', () => (el.id === 'whiteBg' ? run() : schedule())),
 );
 
@@ -212,3 +224,25 @@ if (presets.length > 0) {
   presetSel.value = '0';
   presetSel.dispatchEvent(new Event('change'));
 }
+
+function setSource(img: ImageData): void {
+  source = img;
+  srcCanvas.width = img.width;
+  srcCanvas.height = img.height;
+  srcCanvas.getContext('2d')!.putImageData(img, 0, 0);
+}
+
+$<HTMLSelectElement>('previewMode').addEventListener('change', (e) =>
+  preview?.setMode((e.target as HTMLSelectElement).value as 'warp' | 'naive'),
+);
+
+$('sampleBtn').addEventListener('click', () => {
+  sourceName = 'sample';
+  setSource(makeSample());
+  run();
+});
+
+// start with the sample so there is something to look at right away
+sourceName = 'sample';
+setSource(makeSample());
+run();

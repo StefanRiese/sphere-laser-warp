@@ -45,8 +45,9 @@ For a ball of radius R with a horizontal rotary axis:
 - the output raster is resampled so columns/rows map to axis position and rotation
 - relative to a cylinder of the same diameter: width is scaled by `1/cos φ`, height by `cos φ`
 
-Beyond roughly ±30–35° latitude the spot elongates and defocuses, so the tool shows a
-warning overlay for that zone.
+The output file covers exactly the area the image occupies, nothing more. Far from the top
+of the ball the laser spot elongates and defocuses; there is no hard limit, the info line
+shows how far from the equator the image reaches, so keep large images modest.
 
 ## Target hardware
 
@@ -59,7 +60,6 @@ generic PNG export.
 
 - [x] M1: image upload (raster and SVG), parameter form, live pre-warped preview, PNG and SVG export
 - [x] M2a: 3D ball preview
-- [x] M2b: latitude-limit overlay in the preview
 - [x] M3: machine presets (xTool M1 + RA2 Pro chuck included; add more as JSON files in `presets/`); G-code and roller-drive maths are out of scope
 - [ ] M4: SVG path warp, tiled-cap mode for large images
 - [ ] M5: calibration test pattern and fitting

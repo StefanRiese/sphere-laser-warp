@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 const dir = join(__dirname, '..', 'presets');
 const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
 const allowed = new Set([
-  'ballDiameterMm', 'projection', 'latitudeLimitDeg', 'dpi', 'orientation',
+  'ballDiameterMm', 'projection', 'dpi', 'orientation',
   'axisAngleDeg', 'offsetAxisMm', 'mirror', 'flipRotation',
 ]);
 
@@ -19,7 +19,6 @@ describe('presets', () => {
     for (const k of Object.keys(p.params)) expect(allowed.has(k), `unknown param ${k}`).toBe(true);
     if ('projection' in p.params) expect(['equidistant', 'stereographic', 'equalarea']).toContain(p.params.projection);
     if ('orientation' in p.params) expect(['rows', 'cols']).toContain(p.params.orientation);
-    if ('latitudeLimitDeg' in p.params) expect(p.params.latitudeLimitDeg).toBeGreaterThan(0);
     if ('dpi' in p.params) expect(p.params.dpi).toBeGreaterThan(0);
   });
 });

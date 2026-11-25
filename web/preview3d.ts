@@ -4,13 +4,22 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 export interface OverlayInfo {
   /** Ball radius in mm. */
   R: number;
-  /** Half-width of the output along the rotation axis in mm. */
-  xMax: number;
+  /** Axis position (mm from the ball centre) of the output's left edge, and its width in mm. */
+  xStart: number;
+  widthMm: number;
   theta0: number;
   thetaSpan: number;
-  /** Latitude limit in degrees from the equator along the rotation axis. */
-  latitudeLimitDeg: number;
   /** +1, or -1 when the rotation direction is reversed. */
+  rotationSign: 1 | -1;
+}
+
+/** The original, unwarped image as it would be engraved if imported into the rotary as is. */
+export interface NaiveInfo {
+  canvas: HTMLCanvasElement | OffscreenCanvas;
+  widthMm: number;
+  heightMm: number;
+  offsetAxisMm: number;
+  mirror: boolean;
   rotationSign: 1 | -1;
 }
 
@@ -21,10 +30,9 @@ export class BallPreview {
   private camera = new THREE.PerspectiveCamera(35, 1, 1, 2000);
   private controls: OrbitControls;
   private ball: THREE.Mesh | null = null;
-  private overlay: THREE.Mesh | null = null;
-  private texture: THREE.CanvasTexture | null = null;
-  private limit: THREE.Group | null = null;
-  private showLimit = true;
+  private warpMesh: THREE.Mesh | null = null;
+  private naiveMesh: THREE.Mesh | null = null;
+  private mode: 'warp' | 'naive' = 'warp';
   private axis: THREE.Group | null = null;
   private showAxis = true;
   private color = '#9b1c1c';
@@ -58,23 +66,43 @@ export class BallPreview {
     this.render();
   }
 
-  update(info: OverlayInfo, textureCanvas: HTMLCanvasElement): void {
+  update(info: OverlayInfo, textureCanvas: HTMLCanvasElement, naive: NaiveInfo | null): void {
     if (info.R !== this.radius) this.rebuildBall(info.R);
-    this.rebuildOverlay(info, textureCanvas);
-    this.rebuildLimit(info.R, info.latitudeLimitDeg);
+    this.disposePatch(this.warpMesh);
+    this.warpMesh = this.makePatch(info.R, {
+      xa: info.xStart, xb: info.xStart + info.widthMm, theta0: info.theta0, thetaSpan: info.thetaSpan,
+      canvas: textureCanvas, flipU: false,
+    });
+    this.disposePatch(this.naiveMesh);
+    this.naiveMesh = null;
+    if (naive) {
+      // a cylinder-style rotary maps the file's height onto the circumference of a ball-diameter cylinder
+      const span = naive.heightMm / info.R;
+      this.naiveMesh = this.makePatch(info.R, {
+        xa: naive.offsetAxisMm - naive.widthMm / 2, xb: naive.offsetAxisMm + naive.widthMm / 2,
+        theta0: (-naive.rotationSign * span) / 2, thetaSpan: naive.rotationSign * span,
+        canvas: naive.canvas, flipU: naive.mirror,
+      });
+    }
+    this.applyMode();
     this.rebuildAxis(info.R, info.rotationSign);
     this.render();
+  }
+
+  setMode(mode: 'warp' | 'naive'): void {
+    this.mode = mode;
+    this.applyMode();
+    this.render();
+  }
+
+  private applyMode(): void {
+    if (this.warpMesh) this.warpMesh.visible = this.mode === 'warp';
+    if (this.naiveMesh) this.naiveMesh.visible = this.mode === 'naive';
   }
 
   setAxisVisible(visible: boolean): void {
     this.showAxis = visible;
     if (this.axis) this.axis.visible = visible;
-    this.render();
-  }
-
-  setLimitVisible(visible: boolean): void {
-    this.showLimit = visible;
-    if (this.limit) this.limit.visible = visible;
     this.render();
   }
 
@@ -102,32 +130,51 @@ export class BallPreview {
     this.controls.maxDistance = R * 12;
   }
 
-  private rebuildOverlay(info: OverlayInfo, canvas: HTMLCanvasElement): void {
-    if (this.overlay) {
-      this.overlay.geometry.dispose();
-      (this.overlay.material as THREE.Material).dispose();
-      this.scene.remove(this.overlay);
-    }
-    this.texture?.dispose();
-    this.texture = new THREE.CanvasTexture(canvas);
-    this.texture.colorSpace = THREE.SRGBColorSpace;
-    this.texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+  private disposePatch(m: THREE.Mesh | null): void {
+    if (!m) return;
+    m.geometry.dispose();
+    const mat = m.material as THREE.MeshStandardMaterial;
+    mat.map?.dispose();
+    mat.dispose();
+    this.scene.remove(m);
+  }
 
-    const R = info.R * 1.002; // sit just above the ball surface
+  /**
+   * A textured patch on the sphere. The texture spans axis positions [xa, xb] (mm) and rotation angles
+   * theta0 .. theta0 + thetaSpan; parts beyond the visible ball are cropped, not squeezed.
+   */
+  private makePatch(
+    R0: number,
+    o: { xa: number; xb: number; theta0: number; thetaSpan: number; canvas: HTMLCanvasElement | OffscreenCanvas; flipU: boolean },
+  ): THREE.Mesh {
+    const texture = new THREE.CanvasTexture(o.canvas as HTMLCanvasElement);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+
+    const R = R0 * 1.002; // sit just above the ball surface
+    const clampX = R0 * 0.995;
+    const uA = Math.max(0, (-clampX - o.xa) / (o.xb - o.xa));
+    const uB = Math.min(1, (clampX - o.xa) / (o.xb - o.xa));
+    const abs = Math.abs(o.thetaSpan);
+    const crop = abs > 2 * Math.PI ? (abs - 2 * Math.PI) / (2 * abs) : 0;
+    const vA = crop;
+    const vB = 1 - crop;
     const N = 64;
-    const M = Math.max(8, Math.min(256, Math.ceil((Math.abs(info.thetaSpan) / (2 * Math.PI)) * 256)));
+    const M = Math.max(8, Math.min(256, Math.ceil(((abs * (vB - vA)) / (2 * Math.PI)) * 256)));
     const pos: number[] = [];
     const uv: number[] = [];
     const idx: number[] = [];
     for (let j = 0; j <= M; j++) {
-      const theta = info.theta0 + (j / M) * info.thetaSpan;
+      const v = vA + ((vB - vA) * j) / M;
+      const theta = o.theta0 + v * o.thetaSpan;
       for (let i = 0; i <= N; i++) {
-        const x = -info.xMax + (2 * info.xMax * i) / N;
+        const u = uA + ((uB - uA) * i) / N;
+        const x = o.xa + u * (o.xb - o.xa);
         // keep every vertex exactly on the sphere of radius R
-        const phi = Math.asin(Math.max(-1, Math.min(1, x / info.R)));
+        const phi = Math.asin(Math.max(-1, Math.min(1, x / R0)));
         const r = R * Math.cos(phi);
         pos.push(R * Math.sin(phi), -r * Math.sin(theta), r * Math.cos(theta));
-        uv.push(i / N, 1 - j / M);
+        uv.push(o.flipU ? 1 - u : u, 1 - v);
       }
     }
     for (let j = 0; j < M; j++) {
@@ -142,10 +189,10 @@ export class BallPreview {
     g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
     g.setIndex(idx);
     g.computeVertexNormals();
-    this.overlay = new THREE.Mesh(
+    const mesh = new THREE.Mesh(
       g,
       new THREE.MeshStandardMaterial({
-        map: this.texture,
+        map: texture,
         transparent: true,
         roughness: 0.4,
         metalness: 0.1,
@@ -154,48 +201,8 @@ export class BallPreview {
         polygonOffsetFactor: -2,
       }),
     );
-    this.scene.add(this.overlay);
-  }
-
-  /** Tinted caps beyond the latitude limit (spot elongates and defocuses there) plus a ring at each limit. */
-  private rebuildLimit(R: number, limitDeg: number): void {
-    if (this.limit) {
-      this.limit.traverse((o) => {
-        const m = o as THREE.Mesh;
-        m.geometry?.dispose();
-        (m.material as THREE.Material | undefined)?.dispose();
-      });
-      this.scene.remove(this.limit);
-    }
-    const lim = (limitDeg * Math.PI) / 180;
-    const group = new THREE.Group();
-    group.visible = this.showLimit;
-    const rr = R * 1.004;
-    const capLen = Math.PI / 2 - lim;
-    const tint = new THREE.MeshBasicMaterial({
-      color: 0xff3b30,
-      transparent: true,
-      opacity: 0.3,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    if (capLen > 0.001) {
-      // SphereGeometry's poles lie on local Y; the group is rotated below so they lie on the rotation axis (X)
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(rr, 96, 16, 0, Math.PI * 2, 0, capLen), tint));
-      group.add(new THREE.Mesh(new THREE.SphereGeometry(rr, 96, 16, 0, Math.PI * 2, Math.PI - capLen, capLen), tint.clone()));
-    }
-    const ringMat = new THREE.LineBasicMaterial({ color: 0xff3b30 });
-    for (const sign of [1, -1]) {
-      const pts: THREE.Vector3[] = [];
-      for (let i = 0; i < 128; i++) {
-        const a = (i / 128) * Math.PI * 2;
-        pts.push(new THREE.Vector3(rr * Math.cos(lim) * Math.cos(a), sign * rr * Math.sin(lim), rr * Math.cos(lim) * Math.sin(a)));
-      }
-      group.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), ringMat));
-    }
-    group.rotation.z = -Math.PI / 2; // local +Y -> world +X
-    this.limit = group;
-    this.scene.add(group);
+    this.scene.add(mesh);
+    return mesh;
   }
 
   private static disposeGroup(g: THREE.Object3D): void {

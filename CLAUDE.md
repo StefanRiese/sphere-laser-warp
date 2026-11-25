@@ -26,7 +26,7 @@ xTool Creative Space or LightBurn. Roller-drive kinematics is out of scope unles
 - Canonical warp output: columns = axis, rows = rotation. The export may be transposed (`transpose()`); the 3D preview always uses the canonical layout.
 - Image size can be defined by width or height; core only takes `imageWidthMm`.
 - Projections: azimuthal equidistant (default), stereographic, Lambert equal-area.
-- Latitude limit default about ±30° because of spot elongation and defocus.
+- No latitude limit. The output is cropped to the image footprint and never padded; the UI reports the maximum latitude reached (spot elongation and defocus are physical).
 
 ## Conventions
 
