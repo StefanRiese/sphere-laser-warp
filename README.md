@@ -1,4 +1,4 @@
-<p align="center"><img src="web/public/favicon.svg" alt="Sphere Laser Warp icon" width="96" /></p>
+<p align="center"><img src="web/public/favicon.svg?v=2" alt="Sphere Laser Warp icon" width="96" /></p>
 
 # Sphere Laser Warp
 
