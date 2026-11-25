@@ -10,6 +10,7 @@ import type { BallPreview } from './preview3d';
 import { applyStatic, fmt, getLang, onLangChange, setLang, t } from './i18n';
 import type { Lang } from './strings';
 import { effectiveTheme, setTheme } from './theme';
+import { restoreSettings, saveSettings } from './settings';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = $<HTMLCanvasElement>('out');
@@ -168,8 +169,12 @@ $<HTMLInputElement>('file').addEventListener('change', async (e) => {
   }
 });
 
-document.querySelectorAll('.controls input:not(#file):not(#ballColor):not(#showAxis):not(#measAxis):not(#measAround), .controls select').forEach((el) =>
+document.querySelectorAll('.controls input:not(#file):not(#ballColor):not(#showAxis), .controls select').forEach((el) =>
   el.addEventListener('input', () => (el.id === 'whiteBg' ? run() : schedule())),
+);
+// saved after the other handlers of the same event (the preset and size-by handlers change other fields)
+document.querySelectorAll('.controls input:not(#file), .controls select').forEach((el) =>
+  ['input', 'change'].forEach((ev) => el.addEventListener(ev, () => setTimeout(saveSettings, 0))),
 );
 
 dlPng.addEventListener('click', async () => {
@@ -251,6 +256,15 @@ if (presets.length > 0) {
   presetSel.value = '0';
   presetSel.dispatchEvent(new Event('change'));
 }
+// settings from an earlier visit or from the URL hash override the preset defaults
+restoreSettings();
+// pasting a different settings hash into an open page applies it
+window.addEventListener('hashchange', () => {
+  restoreSettings();
+  updateSizeLabel();
+  updateFileHint();
+  run();
+});
 
 /**
  * The original image turned so that its chosen axis direction runs along the rotation axis, as it would be

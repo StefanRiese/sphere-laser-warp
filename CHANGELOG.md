@@ -7,6 +7,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Settings are remembered between visits and kept in the URL hash, so a setup can be shared by copying the address (the image itself is not included).
 - "GitHub" link in the header pointing to the repository.
 - Site icon (favicon, also shown next to the title in the header) and status badges in the README.
 - Theme switch (sun/moon icon button, light/dark; starts with the system setting), remembered across visits; the dark theme now has readable button text.

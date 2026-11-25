@@ -12,7 +12,7 @@ xTool Studio or LightBurn. Roller-drive kinematics is out of scope unless reques
 ## Layout
 
 - `core/`: pure, DOM-free TypeScript, unit-tested in Node: `projection.ts` (sphere <-> image plane, placement), `warp.ts` (resampling, footprint crop, `transpose`), `vector.ts` (forward mapping and polyline warp for the vector export).
-- `web/`: Vite app. `main.ts` wires the UI; `warp.worker.ts` runs the warp; `preview3d.ts` is the three.js ball (lazy-loaded); `export.ts` (PNG with DPI, SVG), `loadImage.ts` (raster and SVG upload), `vectorWarp.ts` (vector SVG export: samples SVG geometry in the browser, maps it with `core/vector.ts`), `sample.ts` (generated sample image), `presets.ts`, `i18n.ts` + `strings.ts`, `theme.ts` (light/dark toggle, starts with the system setting; the saved theme is also applied by an inline script in `index.html` to avoid a flash).
+- `web/`: Vite app. `main.ts` wires the UI; `warp.worker.ts` runs the warp; `preview3d.ts` is the three.js ball (lazy-loaded); `export.ts` (PNG with DPI, SVG), `loadImage.ts` (raster and SVG upload), `vectorWarp.ts` (vector SVG export: samples SVG geometry in the browser, maps it with `core/vector.ts`), `sample.ts` (generated sample image), `presets.ts`, `settings.ts` (remember settings, URL hash), `i18n.ts` + `strings.ts`, `theme.ts` (light/dark toggle, starts with the system setting; the saved theme is also applied by an inline script in `index.html` to avoid a flash).
 - `presets/`: machine presets as JSON (`name`, `name_de`, `description`, `params`); picked up automatically by `web/presets.ts`, validated by `core/presets.test.ts`.
 - `.github/workflows/pages.yml`: test, build and deploy to Pages on every push to `main`.
 
@@ -40,7 +40,7 @@ xTool Studio or LightBurn. Roller-drive kinematics is out of scope unless reques
 - No backend, no uploads, no tracking. Everything runs in the browser.
 - Keep `core/` free of DOM and browser APIs so it can be tested in Node.
 - Heavy resampling runs in a Web Worker.
-- Not implemented yet: keeping parameters in the URL hash so setups are shareable.
+- Settings (preset, sizes, angle, offset, projection, dpi, colour, orientation, previews; not the image) are kept in localStorage and mirrored in the URL hash (`web/settings.ts`, encoding in `core/settings.ts`). The hash wins over localStorage, which wins over the preset defaults. Add new controls to `SETTING_IDS`.
 - Add or update tests with every change to projection or warp maths.
 - Record user-visible changes in `CHANGELOG.md` under `[Unreleased]`; keep `README.md` usage and roadmap current.
 - Out of scope unless asked: G-code generation, roller-drive kinematics.

@@ -31,6 +31,9 @@ The interface is available in English and German and in a light or dark theme (s
 6. In rotary mode set the object diameter to the ball diameter. The export orientation can be
    switched between rotation along the image height and along the image width.
 
+Your settings are remembered in the browser and mirrored in the page address, so you can copy the
+URL to share or bookmark a setup (the image itself is not part of it).
+
 Import behaviour of the SVG in xTool Studio is untested; use the PNG if it misbehaves.
 
 ### Vector export
@@ -100,6 +103,7 @@ Pushes to `main` run the tests and deploy to GitHub Pages through GitHub Actions
 - [x] 3D ball preview with rotation axis and without-warp comparison
 - [x] Machine presets, English and German UI
 - [x] SVG path warp (true vector output)
+- [x] Settings remembered and shareable through the URL hash
 - [ ] Tiled mode for large images
 
 Out of scope: G-code generation and roller-drive rotaries.
