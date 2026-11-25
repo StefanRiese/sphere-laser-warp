@@ -7,6 +7,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Site icon (favicon) and status badges in the README.
 - Theme switch (System / Light / Dark), remembered across visits; the dark theme now has readable button text.
 - "Donate" / "Spenden" button in the header linking to the maintainer's PayPal.me page.
 - Vector export: for an uploaded SVG, "Download vector SVG (paths)" warps the paths onto the ball and writes them as polylines in mm (fills, strokes, fill rules and holes kept; constant stroke width; unsupported content is reported).

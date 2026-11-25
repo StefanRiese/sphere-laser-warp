@@ -1,4 +1,13 @@
+<p align="center"><img src="web/public/favicon.svg" alt="Sphere Laser Warp icon" width="96" /></p>
+
 # Sphere Laser Warp
+
+[![Deploy to Pages](https://github.com/StefanRiese/sphere-laser-warp/actions/workflows/pages.yml/badge.svg)](https://github.com/StefanRiese/sphere-laser-warp/actions/workflows/pages.yml)
+[![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-blue)](https://stefanriese.github.io/sphere-laser-warp/)
+[![License: MIT](https://img.shields.io/github/license/StefanRiese/sphere-laser-warp)](LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/StefanRiese/sphere-laser-warp)](https://github.com/StefanRiese/sphere-laser-warp/commits/main)
+[![Stars](https://img.shields.io/github/stars/StefanRiese/sphere-laser-warp?style=flat)](https://github.com/StefanRiese/sphere-laser-warp/stargazers)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
 
 A browser tool that pre-distorts a flat image so that, once engraved on a ball
 (for example a glass Christmas bauble) with a rotary unit, it looks **undistorted**.
