@@ -6,12 +6,13 @@
 const BASE = 'https://abacus.jasoncameron.dev';
 const KEY = 'sphere-laser-warp/downloads';
 
-async function call(action: 'get' | 'hit'): Promise<number | null> {
+async function call(action: 'info' | 'hit'): Promise<number | null> {
   try {
     const res = await fetch(`${BASE}/${action}/${KEY}`, { cache: 'no-store' });
     if (!res.ok) return null;
     const v = (await res.json()).value;
-    return typeof v === 'number' ? v : null;
+    // /info reports -1 for a counter that has not been hit yet
+    return typeof v === 'number' ? Math.max(0, v) : null;
   } catch {
     return null;
   }
@@ -27,7 +28,7 @@ function show(n: number | null): void {
 
 /** Show the current count (call once on start). */
 export async function loadCount(): Promise<void> {
-  show(await call('get'));
+  show(await call('info'));
 }
 
 /** Count one use and update the displayed number. */
