@@ -10,7 +10,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 - The "without warp" 3D view now respects the rotation axis direction in the image.
 
 ### Removed
-- Mirror option.
+- Mirror option and the reverse-rotation-direction option.
 - Latitude limit and its 3D overlay. The output is cropped to the image footprint; the info line shows how far from the equator the image reaches.
 
 ### Added
@@ -18,7 +18,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Calibration test pattern (5 mm grid, 10 mm centre square, circles, corner squares) and a helper that evaluates a measured test engraving and suggests the real ball diameter.
 - Built-in sample image (grid, circles, face), loaded on start, and a 3D preview switch to show the original image without warp for comparison.
 - Machine presets: JSON files in `presets/` are offered in a dropdown; includes xTool M1 + RA2 Pro (chuck).
-- Rotation axis in the 3D preview: axis line with end arrows and an arrow for the rotation direction (follows "Reverse rotation direction"), with a toggle.
+- Rotation axis in the 3D preview: axis line with end arrows and an arrow for the rotation direction with a toggle.
 - Define the image size by width or height.
 - Define the rotation axis direction in the image (any angle), the image position along the axis, and the export orientation (rotation along image height or width).
 - Interactive 3D ball preview (three.js, lazy-loaded) showing the engraving wrapped on the ball, with a ball colour picker.

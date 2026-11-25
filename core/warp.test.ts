@@ -51,8 +51,7 @@ describe('warp', () => {
   it('reports the rotation range covered by the output rows', () => {
     const r = warp(solid(40, 40, [255, 0, 0, 255]), { ...base, imageWidthMm: 20 });
     expect(r.theta0 + r.thetaSpan / 2).toBeCloseTo(0, 1); // centred on the view direction
-    const r2 = warp(solid(40, 40, [255, 0, 0, 255]), { ...base, imageWidthMm: 20, flipRotation: true });
-    expect(Math.sign(r2.thetaSpan)).toBe(-Math.sign(r.thetaSpan));
+    expect(r.thetaSpan).toBeGreaterThan(0);
   });
 
   const centroid = (r: ReturnType<typeof warp>) => {

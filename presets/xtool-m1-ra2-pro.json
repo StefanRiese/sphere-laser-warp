@@ -7,7 +7,6 @@
     "dpi": 254,
     "orientation": "rows",
     "axisAngleDeg": 90,
-    "offsetAxisMm": 0,
-    "flipRotation": false
+    "offsetAxisMm": 0
   }
 }

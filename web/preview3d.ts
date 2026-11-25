@@ -9,8 +9,6 @@ export interface OverlayInfo {
   widthMm: number;
   theta0: number;
   thetaSpan: number;
-  /** +1, or -1 when the rotation direction is reversed. */
-  rotationSign: 1 | -1;
 }
 
 /** The original, unwarped image as it would be engraved if imported into the rotary as is. */
@@ -19,7 +17,6 @@ export interface NaiveInfo {
   widthMm: number;
   heightMm: number;
   offsetAxisMm: number;
-  rotationSign: 1 | -1;
 }
 
 /** Orbitable 3D ball showing the engraved result wrapped on its surface. */
@@ -33,7 +30,7 @@ export class BallPreview {
   private naiveMesh: THREE.Mesh | null = null;
   private mode: 'warp' | 'naive' = 'warp';
   private labels = { plus: 'axis +', minus: 'axis -', turns: 'ball turns' };
-  private axisArgs: { R: number; sign: 1 | -1 } | null = null;
+  private axisR: number | null = null;
   private axis: THREE.Group | null = null;
   private showAxis = true;
   private color = '#9b1c1c';
@@ -81,13 +78,13 @@ export class BallPreview {
       const span = naive.heightMm / info.R;
       this.naiveMesh = this.makePatch(info.R, {
         xa: naive.offsetAxisMm - naive.widthMm / 2, xb: naive.offsetAxisMm + naive.widthMm / 2,
-        theta0: (-naive.rotationSign * span) / 2, thetaSpan: naive.rotationSign * span,
+        theta0: -span / 2, thetaSpan: span,
         canvas: naive.canvas,
       });
     }
     this.applyMode();
-    this.axisArgs = { R: info.R, sign: info.rotationSign };
-    this.rebuildAxis(info.R, info.rotationSign);
+    this.axisR = info.R;
+    this.rebuildAxis(info.R);
     this.render();
   }
 
@@ -105,7 +102,7 @@ export class BallPreview {
   /** Translated texts for the axis labels; rebuilds them if the axis is already shown. */
   setLabels(l: { plus: string; minus: string; turns: string }): void {
     this.labels = l;
-    if (this.axisArgs) this.rebuildAxis(this.axisArgs.R, this.axisArgs.sign);
+    if (this.axisR !== null) this.rebuildAxis(this.axisR);
     this.render();
   }
 
@@ -246,7 +243,7 @@ export class BallPreview {
   }
 
   /** The rotation axis (X) with end arrows and labels, plus an arrow showing the rotation direction. */
-  private rebuildAxis(R: number, sign: 1 | -1): void {
+  private rebuildAxis(R: number): void {
     if (this.axis) {
       BallPreview.disposeGroup(this.axis);
       this.scene.remove(this.axis);
@@ -272,7 +269,7 @@ export class BallPreview {
     }
 
     // rotation direction: arc around the axis beyond the + end, running the way the ball's surface moves.
-    // File rows advance in theta by `sign`, i.e. the point under the beam has theta = sign * progress, so the
+    // File rows advance in increasing theta, i.e. the point under the beam has theta = progress, so the
     // material moves toward decreasing circle angle: surface point = (x, -r sin(theta), r cos(theta)).
     const x0 = L - R * 0.35;
     const rho = R * 0.42;
@@ -280,7 +277,7 @@ export class BallPreview {
     const steps = 48;
     const span = Math.PI * 1.5;
     for (let i = 0; i <= steps; i++) {
-      const th = -sign * (i / steps) * span;
+      const th = -(i / steps) * span;
       pts.push(new THREE.Vector3(x0, -rho * Math.sin(th), rho * Math.cos(th)));
     }
     g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 96, t * 1.4, 8), rotMat));

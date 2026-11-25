@@ -14,8 +14,6 @@ export interface WarpParams {
   projection: Projection;
   /** Output resolution in pixels per inch. */
   dpi: number;
-  /** Reverse the rotation direction. */
-  flipRotation: boolean;
   /** Which image direction runs along the rotation axis, in degrees counter-clockwise from horizontal. */
   axisAngleDeg: number;
   /** Shift of the image centre along the rotation axis in mm (from the ball's centre plane). */
@@ -41,7 +39,6 @@ export const DEFAULT_PARAMS: WarpParams = {
   imageWidthMm: 40,
   projection: 'equidistant',
   dpi: 254,
-  flipRotation: false,
   axisAngleDeg: 0,
   offsetAxisMm: 0,
 };
@@ -125,7 +122,6 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
 
   const imgW = p.imageWidthMm;
   const imgH = (p.imageWidthMm * src.height) / src.width;
-  const sgn = p.flipRotation ? -1 : 1;
   const alpha = (p.axisAngleDeg * Math.PI) / 180;
   const ca = Math.cos(alpha);
   const sa = Math.sin(alpha);
@@ -151,7 +147,7 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
   const full = new Uint8ClampedArray(width * fullRows * 4);
 
   for (let row = 0; row < fullRows; row++) {
-    const theta = pl.theta + sgn * (((row + 0.5) / fullRows) * 2 * Math.PI - Math.PI);
+    const theta = pl.theta + (((row + 0.5) / fullRows) * 2 * Math.PI - Math.PI);
     for (let col = 0; col < width; col++) {
       const x = xa + (col + 0.5) * mmPerPx;
       const q = surfaceToPlane(p.projection, R, x, theta, pl);
@@ -193,8 +189,8 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
     const from = ((r0 + row) * width + c0) * 4;
     data.set(full.subarray(from, from + outW * 4), row * outW * 4);
   }
-  const dTheta = sgn * ((2 * Math.PI) / fullRows);
-  const theta0 = pl.theta + sgn * ((r0 / fullRows) * 2 * Math.PI - Math.PI);
+  const dTheta = (2 * Math.PI) / fullRows;
+  const theta0 = pl.theta + ((r0 / fullRows) * 2 * Math.PI - Math.PI);
   return {
     data, width: outW, height, mmPerPx, widthMm: outW * mmPerPx, heightMm: height * mmPerPx, clipped: fp.clipped,
     theta0, thetaSpan: dTheta * height, xStart: xa + c0 * mmPerPx,

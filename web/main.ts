@@ -72,7 +72,6 @@ function readParams(): WarpParams {
     imageWidthMm: imageWidthMm(),
     projection: $<HTMLSelectElement>('projection').value as Projection,
     dpi: num('dpi', DEFAULT_PARAMS.dpi),
-    flipRotation: $<HTMLInputElement>('flipRotation').checked,
     axisAngleDeg: numAny('axisAngleDeg', 0),
     offsetAxisMm: numAny('offsetAxisMm', 0),
   };
@@ -135,13 +134,12 @@ worker.onmessage = (e: MessageEvent) => {
   const p = readParams();
   void getPreview().then((pv) =>
     pv?.update(
-      { R: p.ballDiameterMm / 2, xStart: r.xStart, widthMm: r.widthMm, theta0: r.theta0, thetaSpan: r.thetaSpan, rotationSign: p.flipRotation ? -1 : 1 },
+      { R: p.ballDiameterMm / 2, xStart: r.xStart, widthMm: r.widthMm, theta0: r.theta0, thetaSpan: r.thetaSpan },
       rawCanvas,
       source
         ? {
             ...rotatedSource(p.axisAngleDeg, imgW, imgH),
             offsetAxisMm: p.offsetAxisMm,
-            rotationSign: p.flipRotation ? -1 : 1,
           }
         : null,
     ),
