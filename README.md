@@ -86,7 +86,7 @@ bauble) or apply a black paint or spray layer. Test on a spare ball first.
 ```sh
 npm install
 npm run dev        # local dev server
-npm test           # unit tests (projection, warp, calibration, presets, i18n)
+npm test           # unit tests (projection, warp, presets, i18n)
 npm run typecheck  # tsc --noEmit
 npm run build      # typecheck + production build into dist/
 ```
@@ -98,7 +98,7 @@ Pushes to `main` run the tests and deploy to GitHub Pages through GitHub Actions
 
 - [x] Upload (raster and SVG), live warp preview, PNG and SVG export
 - [x] 3D ball preview with rotation axis and without-warp comparison
-- [x] Machine presets, calibration pattern and test-engraving evaluation, English and German UI
+- [x] Machine presets, English and German UI
 - [x] SVG path warp (true vector output)
 - [ ] Tiled mode for large images
 
