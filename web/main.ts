@@ -11,6 +11,7 @@ import type { WorkerRequest } from './warp.worker';
 import type { BallPreview } from './preview3d';
 import { applyStatic, fmt, getLang, onLangChange, setLang, t } from './i18n';
 import type { Lang } from './strings';
+import { getTheme, setTheme, type Theme } from './theme';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = $<HTMLCanvasElement>('out');
@@ -382,3 +383,8 @@ onLangChange(() => {
 applyStatic();
 updateSizeLabel();
 updateFileHint();
+
+// --- theme ---
+const themeSel = $<HTMLSelectElement>('theme');
+themeSel.value = getTheme();
+themeSel.addEventListener('change', () => setTheme(themeSel.value as Theme));
