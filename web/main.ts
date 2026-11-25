@@ -2,6 +2,8 @@ import { DEFAULT_PARAMS, type WarpParams, transpose } from '../core/warp';
 import type { Projection } from '../core/projection';
 import { presets, type PresetParams } from './presets';
 import { makeSample } from './sample';
+import { CALIBRATION_SQUARE_MM, CALIBRATION_WIDTH_MM, makeCalibrationPattern } from './calibration';
+import { calibrate } from '../core/calibration';
 import { loadImage } from './loadImage';
 import { canvasToPng, canvasToSvg, download } from './export';
 import type { WorkerRequest } from './warp.worker';
@@ -166,7 +168,7 @@ $<HTMLInputElement>('file').addEventListener('change', async (e) => {
   }
 });
 
-document.querySelectorAll('.controls input:not(#file):not(#ballColor):not(#showAxis), .controls select').forEach((el) =>
+document.querySelectorAll('.controls input:not(#file):not(#ballColor):not(#showAxis):not(#measAxis):not(#measAround), .controls select').forEach((el) =>
   el.addEventListener('input', () => (el.id === 'whiteBg' ? run() : schedule())),
 );
 
@@ -239,6 +241,65 @@ $<HTMLSelectElement>('previewMode').addEventListener('change', (e) =>
 $('sampleBtn').addEventListener('click', () => {
   sourceName = 'sample';
   setSource(makeSample());
+  run();
+});
+
+$('calBtn').addEventListener('click', () => {
+  sourceName = 'calibration';
+  setSource(makeCalibrationPattern());
+  $<HTMLSelectElement>('sizeBy').value = 'width';
+  $<HTMLSelectElement>('sizeBy').dispatchEvent(new Event('change'));
+  $<HTMLInputElement>('imageSizeMm').value = String(CALIBRATION_WIDTH_MM);
+  $<HTMLInputElement>('axisAngleDeg').value = '0';
+  $<HTMLInputElement>('offsetAxisMm').value = '0';
+  $<HTMLDetailsElement>('calib').open = true;
+  run();
+});
+
+// --- evaluating a test engraving ---
+let suggestedDiameter = 0;
+function evaluateCalibration(): void {
+  const axis = parseFloat($<HTMLInputElement>('measAxis').value);
+  const around = parseFloat($<HTMLInputElement>('measAround').value);
+  const out = $('calResult');
+  const apply = $<HTMLButtonElement>('applyDiameter');
+  apply.hidden = true;
+  if (!(axis > 0) && !(around > 0)) {
+    out.textContent = '';
+    return;
+  }
+  const p = readParams();
+  const target = (CALIBRATION_SQUARE_MM * p.imageWidthMm) / CALIBRATION_WIDTH_MM;
+  const r = calibrate({
+    ballDiameterMm: p.ballDiameterMm,
+    targetMm: target,
+    measuredAxisMm: axis > 0 ? axis : target,
+    measuredAroundMm: around > 0 ? around : target,
+  });
+  const pct = (v: number) => `${(v * 100).toFixed(1)} %`;
+  const lines = [`Target: ${target.toFixed(1)} mm.`];
+  if (axis > 0) {
+    lines.push(
+      `Along the axis: ${pct(r.axisRatio)} of target.` +
+        (Math.abs(r.axisRatio - 1) > 0.01 ? ' This is a machine matter (X scale or focus), not the ball diameter.' : ''),
+    );
+  }
+  if (around > 0) {
+    lines.push(`Around the ball: ${pct(r.aroundRatio)} of target, so the real ball diameter is about ${r.suggestedBallDiameterMm.toFixed(1)} mm.`);
+    if (Math.abs(r.aroundRatio - 1) > 0.005) {
+      suggestedDiameter = r.suggestedBallDiameterMm;
+      apply.hidden = false;
+    }
+  }
+  out.textContent = lines.join(' ');
+}
+$('measAxis').addEventListener('input', evaluateCalibration);
+$('measAround').addEventListener('input', evaluateCalibration);
+$('applyDiameter').addEventListener('click', () => {
+  $<HTMLInputElement>('ballDiameterMm').value = suggestedDiameter.toFixed(1);
+  $<HTMLInputElement>('measAxis').value = '';
+  $<HTMLInputElement>('measAround').value = '';
+  evaluateCalibration();
   run();
 });
 
