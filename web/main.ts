@@ -1,7 +1,9 @@
 import { DEFAULT_PARAMS, type WarpParams } from '../core/warp';
 import type { Projection } from '../core/projection';
+import { loadImage } from './loadImage';
 import { canvasToPng, canvasToSvg, download } from './export';
 import type { WorkerRequest } from './warp.worker';
+import type { BallPreview } from './preview3d';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = $<HTMLCanvasElement>('out');
@@ -16,6 +18,24 @@ let sourceName = 'image';
 let reqId = 0;
 let sizeMm = { w: 0, h: 0 };
 let currentDpi = DEFAULT_PARAMS.dpi;
+const rawCanvas = document.createElement('canvas'); // warped result without background, for the 3D texture
+let preview: BallPreview | null = null;
+let previewLoading: Promise<BallPreview | null> | null = null;
+
+function getPreview(): Promise<BallPreview | null> {
+  if (preview) return Promise.resolve(preview);
+  previewLoading ??= import('./preview3d')
+    .then((m) => {
+      preview = new m.BallPreview($('ball3d'));
+      preview.setBallColor($<HTMLInputElement>('ballColor').value);
+      return preview;
+    })
+    .catch(() => {
+      $('ball3d').textContent = '3D preview needs WebGL, which is not available in this browser.';
+      return null;
+    });
+  return previewLoading;
+}
 
 function num(id: string, fallback: number): number {
   const v = parseFloat($<HTMLInputElement>(id).value);
@@ -57,8 +77,11 @@ worker.onmessage = (e: MessageEvent) => {
   canvas.width = r.width;
   canvas.height = r.height;
   const ctx = canvas.getContext('2d')!;
+  rawCanvas.width = r.width;
+  rawCanvas.height = r.height;
+  rawCanvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(r.buffer), r.width, r.height), 0, 0);
   ctx.clearRect(0, 0, r.width, r.height);
-  ctx.putImageData(new ImageData(new Uint8ClampedArray(r.buffer), r.width, r.height), 0, 0);
+  ctx.drawImage(rawCanvas, 0, 0);
   if ($<HTMLInputElement>('whiteBg').checked) {
     ctx.globalCompositeOperation = 'destination-over';
     ctx.fillStyle = '#fff';
@@ -72,21 +95,35 @@ worker.onmessage = (e: MessageEvent) => {
     ? 'The image extends beyond the latitude limit or the visible side of the ball and was cut off. Reduce the image width or raise the limit.'
     : '';
   dlPng.disabled = dlSvg.disabled = false;
+
+  const p = readParams();
+  void getPreview().then((pv) =>
+    pv?.update(
+      { R: p.ballDiameterMm / 2, xMax: r.widthMm / 2, theta0: r.theta0, thetaSpan: r.thetaSpan },
+      rawCanvas,
+    ),
+  );
 };
+
+$<HTMLInputElement>('ballColor').addEventListener('input', (e) => preview?.setBallColor((e.target as HTMLInputElement).value));
 
 $<HTMLInputElement>('file').addEventListener('change', async (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
   if (!f) return;
   sourceName = f.name.replace(/\.[^.]+$/, '') || 'image';
-  const bmp = await createImageBitmap(f);
-  const c = new OffscreenCanvas(bmp.width, bmp.height);
-  const ctx = c.getContext('2d')!;
-  ctx.drawImage(bmp, 0, 0);
-  source = ctx.getImageData(0, 0, bmp.width, bmp.height);
-  run();
+  try {
+    const p = readParams();
+    // pixels needed along the longest image side at the chosen dpi (for SVG rasterisation)
+    const needed = (p.imageWidthMm / 25.4) * p.dpi * 1.5;
+    source = await loadImage(f, needed);
+    run();
+  } catch (err) {
+    warn.hidden = false;
+    warn.textContent = err instanceof Error ? err.message : 'Could not load the file';
+  }
 });
 
-document.querySelectorAll('.controls input:not(#file), .controls select').forEach((el) =>
+document.querySelectorAll('.controls input:not(#file):not(#ballColor), .controls select').forEach((el) =>
   el.addEventListener('input', () => (el.id === 'whiteBg' ? run() : schedule())),
 );
 

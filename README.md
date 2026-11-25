@@ -9,7 +9,7 @@ Everything runs client-side as a static site on GitHub Pages. Images are never u
 
 ## Usage
 
-1. Open the site, load an image, enter the ball diameter and the image width on the ball.
+1. Open the site, load an image (PNG, JPG, SVG and other browser-supported formats), enter the ball diameter and the image width on the ball.
 2. Download the **PNG** (carries the DPI, so it imports at the right size) or the **SVG**
    (physical size in mm, raster embedded) and import it in xTool Studio / LightBurn.
 3. In rotary mode set the object diameter to the ball diameter. The image width runs along
@@ -55,8 +55,9 @@ generic PNG export.
 
 ## Planned features
 
-- [x] M1: image upload, parameter form, live pre-warped preview, PNG and SVG export
-- [ ] M2: 3D ball preview, extra projections, latitude-limit overlay
+- [x] M1: image upload (raster and SVG), parameter form, live pre-warped preview, PNG and SVG export
+- [x] M2a: 3D ball preview
+- [ ] M2b: latitude-limit overlay in the preview
 - [ ] M3: machine presets (xTool M1 + RA2 Pro chuck first); G-code and roller-drive maths are out of scope
 - [ ] M4: SVG path warp, tiled-cap mode for large images
 - [ ] M5: calibration test pattern and fitting

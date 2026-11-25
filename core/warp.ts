@@ -29,6 +29,9 @@ export interface WarpResult extends RGBAImage {
   heightMm: number;
   /** True if the image extends beyond the latitude limit or the visible hemisphere and was cut off. */
   clipped: boolean;
+  /** Rotation angle (rad) at the top edge of the output and the signed angle covered by its full height. */
+  theta0: number;
+  thetaSpan: number;
 }
 
 export const DEFAULT_PARAMS: WarpParams = {
@@ -136,12 +139,17 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
     }
   }
   if (first < 0) {
-    return { data: new Uint8ClampedArray(4), width: 1, height: 1, mmPerPx, widthMm: mmPerPx, heightMm: mmPerPx, clipped: true };
+    return { data: new Uint8ClampedArray(4), width: 1, height: 1, mmPerPx, widthMm: mmPerPx, heightMm: mmPerPx, clipped: true, theta0: 0, thetaSpan: 0 };
   }
 
   const clipped = footprintClipped(p.projection, R, imgW, imgH, xMax);
 
   const height = last - first + 1;
   const data = full.slice(first * width * 4, (last + 1) * width * 4);
-  return { data, width, height, mmPerPx, widthMm: width * mmPerPx, heightMm: height * mmPerPx, clipped };
+  const dTheta = sgn * ((2 * Math.PI) / fullRows);
+  const theta0 = sgn * ((first / fullRows) * 2 * Math.PI - Math.PI);
+  return {
+    data, width, height, mmPerPx, widthMm: width * mmPerPx, heightMm: height * mmPerPx, clipped,
+    theta0, thetaSpan: dTheta * height,
+  };
 }
