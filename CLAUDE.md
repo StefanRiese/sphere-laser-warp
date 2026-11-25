@@ -9,13 +9,17 @@ image so it looks undistorted when laser-engraved on a ball with a rotary unit.
 Primary hardware: xTool M1 + RA2 Pro in chuck mode (direct rotation, no rollers), via
 xTool Creative Space or LightBurn. Roller-drive kinematics is out of scope unless requested.
 
-## Planned layout
+## Layout
 
-- `core/`: pure, DOM-free TypeScript (projections, warp). Unit-tested.
-- `web/`: Vite app (UI, canvas and three.js preview, Web Worker for resampling).
-- `presets/`: machine presets as JSON (`name`, `description`, `params`); picked up automatically by `web/presets.ts`, validated by `core/presets.test.ts`.
-- `docs/`: geometry write-up.
-- `.github/workflows/pages.yml`: build and deploy to Pages.
+- `core/`: pure, DOM-free TypeScript, unit-tested in Node: `projection.ts` (sphere <-> image plane, placement), `warp.ts` (resampling, footprint crop, `transpose`), `calibration.ts` (test-engraving evaluation).
+- `web/`: Vite app. `main.ts` wires the UI; `warp.worker.ts` runs the warp; `preview3d.ts` is the three.js ball (lazy-loaded); `export.ts` (PNG with DPI, SVG), `loadImage.ts` (raster and SVG upload), `sample.ts` and `calibration.ts` (generated test images), `presets.ts`, `i18n.ts` + `strings.ts`.
+- `presets/`: machine presets as JSON (`name`, `name_de`, `description`, `params`); picked up automatically by `web/presets.ts`, validated by `core/presets.test.ts`.
+- `.github/workflows/pages.yml`: test, build and deploy to Pages on every push to `main`.
+
+## Commands
+
+- `npm run dev`, `npm test`, `npm run typecheck`, `npm run build` (typecheck + build into `dist/`).
+- The UI is only verified by running it: build, serve `dist/` (for example `python3 -m http.server -d dist`) and drive it with a headless browser. Wait for the worker result before taking a screenshot.
 
 ## Geometry (keep consistent everywhere)
 
@@ -25,6 +29,7 @@ xTool Creative Space or LightBurn. Roller-drive kinematics is out of scope unles
 - Image placement: `axisAngleDeg` picks which image direction runs along the axis; `offsetAxisMm` moves the image centre along the axis (sphere is rotated so the centre sits at the projection pole).
 - Canonical warp output: columns = axis, rows = rotation. The export may be transposed (`transpose()`); the 3D preview always uses the canonical layout.
 - Image size can be defined by width or height; core only takes `imageWidthMm`.
+- No mirror and no reverse-rotation option: the rotation direction is fixed (theta increases with the file rows); the axis direction angle is the only orientation control.
 - Projections: azimuthal equidistant (default), stereographic, Lambert equal-area.
 - No latitude limit. The output is cropped to the image footprint and never padded; the UI reports the maximum latitude reached (spot elongation and defocus are physical).
 
@@ -34,9 +39,10 @@ xTool Creative Space or LightBurn. Roller-drive kinematics is out of scope unles
 - No backend, no uploads, no tracking. Everything runs in the browser.
 - Keep `core/` free of DOM and browser APIs so it can be tested in Node.
 - Heavy resampling runs in a Web Worker.
-- Parameters live in the URL hash so setups are shareable.
+- Not implemented yet: keeping parameters in the URL hash so setups are shareable.
 - Add or update tests with every change to projection or warp maths.
-- Record user-visible changes in `CHANGELOG.md` under `[Unreleased]`.
+- Record user-visible changes in `CHANGELOG.md` under `[Unreleased]`; keep `README.md` usage and roadmap current.
+- Out of scope unless asked: G-code generation, roller-drive kinematics.
 
 ## Git
 

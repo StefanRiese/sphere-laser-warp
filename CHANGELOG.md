@@ -6,25 +6,28 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-- The "without warp" 3D view now respects the rotation axis direction in the image.
+### Added
+- Warp core (`core/`): equidistant, stereographic and equal-area projections, bilinear resampling, with unit tests.
+- Web app (Vite + TypeScript, warp in a Web Worker) with live flat preview, PNG export (with DPI metadata) and SVG export (size in mm, embedded raster).
+- Upload of raster images and SVG files (SVGs are rasterised at a resolution matched to the output).
+- Image size defined by width or height; rotation axis direction in the image (any angle); image position along the axis; export orientation (rotation along image height or width).
+- Interactive 3D ball preview (three.js, lazy-loaded) with ball colour picker, rotation axis and rotation direction arrow, and a switch to show the original image without warp for comparison.
+- Built-in sample image, loaded on start.
+- Calibration test pattern (5 mm grid, 10 mm centre square, circles, corner squares) and a helper that evaluates a measured test engraving and suggests the real ball diameter.
+- Machine presets: JSON files in `presets/` appear in a dropdown; includes xTool M1 + RA2 Pro (chuck, axis direction 90°).
+- English / German language switch, following the browser on first visit and remembered afterwards. UI texts live in `web/strings.ts`; a test keeps both languages in sync.
+- GitHub Pages deploy workflow (tests, build, deploy).
+- README, changelog and CLAUDE.md; MIT license.
+
+### Changed
+- The output is cropped to the image footprint and never padded; the info line shows how far from the equator the image reaches.
+- The file hint under the preview follows the export orientation.
 
 ### Removed
-- Mirror option and the reverse-rotation-direction option.
-- Latitude limit and its 3D overlay. The output is cropped to the image footprint; the info line shows how far from the equator the image reaches.
+- Latitude limit and its 3D overlay.
+- Mirror option and reverse-rotation-direction option.
+- Descriptive text under the preset dropdown.
+- Scope decisions: no G-code generation, no roller-drive kinematics.
 
-### Added
-- Language switch (English / German). The language follows the browser on first visit and is remembered. UI texts live in `web/strings.ts`; a test keeps both languages in sync.
-- Calibration test pattern (5 mm grid, 10 mm centre square, circles, corner squares) and a helper that evaluates a measured test engraving and suggests the real ball diameter.
-- Built-in sample image (grid, circles, face), loaded on start, and a 3D preview switch to show the original image without warp for comparison.
-- Machine presets: JSON files in `presets/` are offered in a dropdown; includes xTool M1 + RA2 Pro (chuck).
-- Rotation axis in the 3D preview: axis line with end arrows and an arrow for the rotation direction with a toggle.
-- Define the image size by width or height.
-- Define the rotation axis direction in the image (any angle), the image position along the axis, and the export orientation (rotation along image height or width).
-- Interactive 3D ball preview (three.js, lazy-loaded) showing the engraving wrapped on the ball, with a ball colour picker.
-- SVG files can be uploaded; they are rasterised at a resolution matched to the output.
-- Vite + TypeScript app with a Web Worker warp, live preview, PNG export (with DPI metadata) and SVG export (mm size, embedded raster).
-- `core/` projections (equidistant, stereographic, equal-area) and bilinear warp, with unit tests.
-- GitHub Pages deploy workflow.
-- Initial repository with MIT license, README, changelog and CLAUDE.md.
-- Scope decision: chuck-driven rotary only, PNG/SVG output only; no G-code, no roller kinematics.
+### Fixed
+- The "without warp" 3D view respects the rotation axis direction in the image.

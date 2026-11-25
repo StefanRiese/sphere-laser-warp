@@ -3,82 +3,90 @@
 A browser tool that pre-distorts a flat image so that, once engraved on a ball
 (for example a glass Christmas bauble) with a rotary unit, it looks **undistorted**.
 
-Everything runs client-side as a static site on GitHub Pages. Images are never uploaded.
+**Use it:** https://stefanriese.github.io/sphere-laser-warp/
 
-> **Status:** M1 implemented (upload, warp preview, PNG/SVG export). See [CHANGELOG.md](CHANGELOG.md).
+Everything runs client-side as a static site on GitHub Pages. Images are never uploaded.
+The interface is available in English and German (switch in the top right).
 
 ## Usage
 
-The interface is available in English and German (switch in the top right).
-
-1. Open the site, load an image (PNG, JPG, SVG and other browser-supported formats), enter the ball diameter and the image width on the ball.
-2. Define the image size by width or height, set which image direction runs along the rotation
-   axis, and optionally move the image along the axis.
-3. Download the **PNG** (carries the DPI, so it imports at the right size) or the **SVG**
-   (physical size in mm, raster embedded) and import it in xTool Studio / LightBurn.
-4. In rotary mode set the object diameter to the ball diameter. By default the image width runs along
-   the rotation axis and the image height wraps around the ball; the export orientation can be swapped.
+1. Pick a machine preset (xTool M1 + RA2 Pro is included) and load an image
+   (PNG, JPG, SVG and other browser-supported formats), or start with the built-in sample.
+2. Enter the ball diameter and define the image size by width or height (in mm, on the ball).
+3. Set which image direction runs along the rotation axis (angle, 0° = horizontal,
+   90° = vertical) and, if needed, move the image along the axis.
+4. Check the result in the flat preview and in the 3D ball preview. The 3D preview can also show
+   the original image without warp, for comparison.
+5. Download the **PNG** (it carries its DPI, so it imports at the right size) or the **SVG**
+   (physical size in mm, raster embedded) and import it in xTool Studio or LightBurn.
+6. In rotary mode set the object diameter to the ball diameter. The export orientation can be
+   switched between rotation along the image height and along the image width.
 
 Import behaviour of the SVG in xTool Studio is untested; use the PNG if it misbehaves.
+
+### Calibration
+
+Click **Calibration pattern** (40 mm wide: 5 mm grid, 10 mm centre square, circles, corner
+squares), engrave it, then measure the centre square along the axis and around the ball and
+enter the values under **Check a test engraving**. The tool reports both ratios and suggests the
+real ball diameter. A deviation along the axis points at the machine (X scale, focus), not the ball.
+
+## How it works
+
+For a ball of radius R with a horizontal rotary axis and the beam from the top:
+
+- axis position `x = R·sin φ`, rotation angle `θ = λ` (latitude φ, longitude λ)
+- the image is placed on the sphere with a chosen projection: azimuthal equidistant (default),
+  stereographic (no shape stretch) or Lambert equal-area
+- the output raster is resampled (bilinear) so columns map to axis position and rows to rotation
+- relative to a cylinder of the same diameter, width is scaled by `1/cos φ` and height by `cos φ`
+
+On a sphere, rows of the engraving are circles of latitude. Away from the equator they are
+shorter and the surface tilts away from the beam, so a flat image engraved as is gets stretched.
+This tool applies the inverse warp.
+
+The output file covers exactly the area the image occupies, nothing more. There is no latitude
+limit: far from the top of the ball the laser spot elongates and defocuses, so the info line shows
+how far from the equator the image reaches. Keep large images modest.
+
+## Target hardware
+
+Developed for an **xTool M1** with an **RA2 Pro** rotary in **chuck mode** (the ball is clamped
+and rotated directly, no rollers), using xTool Studio or LightBurn in rotary mode. Other gantry or
+rotary setups should work through the generic PNG export. More presets are plain JSON files in
+`presets/`.
+
+## Notes on glass
+
+A blue diode laser barely marks clear glass. Engrave a coating (the silvered or paint layer on a
+bauble) or apply a black paint or spray layer. Test on a spare ball first.
 
 ## Development
 
 ```sh
 npm install
-npm run dev     # local dev server
-npm test        # unit tests for core/
-npm run build   # typecheck + production build into dist/
+npm run dev        # local dev server
+npm test           # unit tests (projection, warp, calibration, presets, i18n)
+npm run typecheck  # tsc --noEmit
+npm run build      # typecheck + production build into dist/
 ```
 
-## The problem
+Stack: TypeScript, Vite, a Web Worker for the warp, three.js (lazy-loaded) for the 3D preview.
+Pushes to `main` run the tests and deploy to GitHub Pages through GitHub Actions.
 
-On a sphere, rows of the engraving are circles of latitude. Away from the equator
-they are shorter than the equator, and the surface tilts away from the beam. A flat
-image engraved as-is is stretched horizontally and compressed vertically toward the
-poles. This tool applies the inverse warp.
+## Roadmap
 
-## How it works
+- [x] Upload (raster and SVG), live warp preview, PNG and SVG export
+- [x] 3D ball preview with rotation axis and without-warp comparison
+- [x] Machine presets, calibration pattern and test-engraving evaluation, English and German UI
+- [ ] SVG path warp (true vector output)
+- [ ] Tiled mode for large images
 
-For a ball of radius R with a horizontal rotary axis:
-
-- axis position `x = R·sin φ`, rotation angle `θ = λ` (latitude φ, longitude λ)
-- the image is placed on the sphere with a chosen projection (azimuthal equidistant by
-  default, also stereographic and Lambert equal-area)
-- the output raster is resampled so columns/rows map to axis position and rotation
-- relative to a cylinder of the same diameter: width is scaled by `1/cos φ`, height by `cos φ`
-
-The output file covers exactly the area the image occupies, nothing more. Far from the top
-of the ball the laser spot elongates and defocuses; there is no hard limit, the info line
-shows how far from the equator the image reaches, so keep large images modest.
-
-## Target hardware
-
-Developed for an **xTool M1** with an **RA2 Pro** rotary in **chuck mode** (the ball is
-clamped and rotated directly, no rollers), using xTool Creative Space or LightBurn in
-rotary mode. Other gantry or rotary setups should work through the
-generic PNG export.
-
-## Planned features
-
-- [x] M1: image upload (raster and SVG), parameter form, live pre-warped preview, PNG and SVG export
-- [x] M2a: 3D ball preview
-- [x] M3: machine presets (xTool M1 + RA2 Pro chuck included; add more as JSON files in `presets/`); G-code and roller-drive maths are out of scope
-- [ ] M4: SVG path warp, tiled-cap mode for large images
-- [x] M5: calibration test pattern and evaluation of a test engraving
-
-## Planned stack
-
-TypeScript, Vite, a small UI layer, Web Workers for resampling, three.js for the 3D
-preview, GitHub Actions deploying to GitHub Pages.
-
-## Notes on glass
-
-A blue diode laser barely marks clear glass. Engrave a coating (the mirror or paint
-layer on a bauble) or apply a black paint or spray layer. Test on a spare ball first.
+Out of scope: G-code generation and roller-drive rotaries.
 
 ## Contributing
 
-Issues and presets for other machines are welcome once the first release is out.
+Issues and presets for other machines are welcome.
 
 ## License
 
