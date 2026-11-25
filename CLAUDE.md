@@ -42,7 +42,7 @@ xTool Studio or LightBurn. Roller-drive kinematics is out of scope unless reques
 - Heavy resampling runs in a Web Worker.
 - Settings (preset, sizes, angle, offset, projection, dpi, colour, orientation, previews; not the image) are kept in localStorage and mirrored in the URL hash (`web/settings.ts`, encoding in `core/settings.ts`). The hash wins over localStorage, which wins over the preset defaults. Add new controls to `SETTING_IDS`.
 - Add or update tests with every change to projection or warp maths.
-- Record user-visible changes in `CHANGELOG.md` under `[Unreleased]`; keep `README.md` usage and roadmap current.
+- Record user-visible changes in `CHANGELOG.md` under `[Unreleased]`; keep `README.md` usage current.
 - Out of scope unless asked: G-code generation, roller-drive kinematics.
 
 ## Git
