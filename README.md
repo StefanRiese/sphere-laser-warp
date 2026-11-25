@@ -24,6 +24,15 @@ The interface is available in English and German (switch in the top right).
 
 Import behaviour of the SVG in xTool Studio is untested; use the PNG if it misbehaves.
 
+### Vector export
+
+If you loaded an SVG, **Download vector SVG (paths)** warps the artwork itself instead of a raster:
+every path is sampled, mapped onto the ball and written as a polyline in mm, so lines stay crisp at
+any size. Fills, strokes and fill rules (including holes) are kept; stroke widths stay constant in mm.
+Text must be converted to outlines first; text, images, `<use>`, gradients, patterns, clip paths and
+masks are not exported and the tool says so. The same size, axis direction, offset and orientation
+settings apply.
+
 ### Calibration
 
 Click **Calibration pattern** (40 mm wide: 5 mm grid, 10 mm centre square, circles, corner
@@ -79,7 +88,7 @@ Pushes to `main` run the tests and deploy to GitHub Pages through GitHub Actions
 - [x] Upload (raster and SVG), live warp preview, PNG and SVG export
 - [x] 3D ball preview with rotation axis and without-warp comparison
 - [x] Machine presets, calibration pattern and test-engraving evaluation, English and German UI
-- [ ] SVG path warp (true vector output)
+- [x] SVG path warp (true vector output)
 - [ ] Tiled mode for large images
 
 Out of scope: G-code generation and roller-drive rotaries.

@@ -7,6 +7,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Vector export: for an uploaded SVG, "Download vector SVG (paths)" warps the paths onto the ball and writes them as polylines in mm (fills, strokes, fill rules and holes kept; constant stroke width; unsupported content is reported).
 - Warp core (`core/`): equidistant, stereographic and equal-area projections, bilinear resampling, with unit tests.
 - Web app (Vite + TypeScript, warp in a Web Worker) with live flat preview, PNG export (with DPI metadata) and SVG export (size in mm, embedded raster).
 - Upload of raster images and SVG files (SVGs are rasterised at a resolution matched to the output).

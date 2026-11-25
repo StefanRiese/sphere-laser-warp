@@ -11,8 +11,8 @@ xTool Studio or LightBurn. Roller-drive kinematics is out of scope unless reques
 
 ## Layout
 
-- `core/`: pure, DOM-free TypeScript, unit-tested in Node: `projection.ts` (sphere <-> image plane, placement), `warp.ts` (resampling, footprint crop, `transpose`), `calibration.ts` (test-engraving evaluation).
-- `web/`: Vite app. `main.ts` wires the UI; `warp.worker.ts` runs the warp; `preview3d.ts` is the three.js ball (lazy-loaded); `export.ts` (PNG with DPI, SVG), `loadImage.ts` (raster and SVG upload), `sample.ts` and `calibration.ts` (generated test images), `presets.ts`, `i18n.ts` + `strings.ts`.
+- `core/`: pure, DOM-free TypeScript, unit-tested in Node: `projection.ts` (sphere <-> image plane, placement), `warp.ts` (resampling, footprint crop, `transpose`), `calibration.ts` (test-engraving evaluation), `vector.ts` (forward mapping and polyline warp for the vector export).
+- `web/`: Vite app. `main.ts` wires the UI; `warp.worker.ts` runs the warp; `preview3d.ts` is the three.js ball (lazy-loaded); `export.ts` (PNG with DPI, SVG), `loadImage.ts` (raster and SVG upload), `vectorWarp.ts` (vector SVG export: samples SVG geometry in the browser, maps it with `core/vector.ts`), `sample.ts` and `calibration.ts` (generated test images), `presets.ts`, `i18n.ts` + `strings.ts`.
 - `presets/`: machine presets as JSON (`name`, `name_de`, `description`, `params`); picked up automatically by `web/presets.ts`, validated by `core/presets.test.ts`.
 - `.github/workflows/pages.yml`: test, build and deploy to Pages on every push to `main`.
 
@@ -28,6 +28,7 @@ xTool Studio or LightBurn. Roller-drive kinematics is out of scope unless reques
 - Versus a cylinder of equal diameter: width scale `1/cos φ`, height scale `cos φ`.
 - Image placement: `axisAngleDeg` picks which image direction runs along the axis; `offsetAxisMm` moves the image centre along the axis (sphere is rotated so the centre sits at the projection pole).
 - Canonical warp output: columns = axis, rows = rotation. The export may be transposed (`transpose()`); the 3D preview always uses the canonical layout.
+- Vector export uses the same mapping as the raster warp, run forward (image -> file). File y is the arc length `R*theta`. Subpaths are measured one by one because browsers disagree on whether `getTotalLength` includes the jump between subpaths; corners are refined after even sampling.
 - Image size can be defined by width or height; core only takes `imageWidthMm`.
 - No mirror and no reverse-rotation option: the rotation direction is fixed (theta increases with the file rows); the axis direction angle is the only orientation control.
 - Projections: azimuthal equidistant (default), stereographic, Lambert equal-area.

@@ -5,6 +5,7 @@ import { makeSample } from './sample';
 import { CALIBRATION_SQUARE_MM, CALIBRATION_WIDTH_MM, makeCalibrationPattern } from './calibration';
 import { calibrate } from '../core/calibration';
 import { loadImage } from './loadImage';
+import { warpSvgToVector } from './vectorWarp';
 import { canvasToPng, canvasToSvg, download } from './export';
 import type { WorkerRequest } from './warp.worker';
 import type { BallPreview } from './preview3d';
@@ -21,6 +22,7 @@ const dlSvg = $<HTMLButtonElement>('dlSvg');
 const worker = new Worker(new URL('./warp.worker.ts', import.meta.url), { type: 'module' });
 let source: ImageData | null = null;
 let sourceName = 'image';
+let sourceSvg: string | null = null; // text of the loaded SVG, for the vector export
 let reqId = 0;
 let sizeMm = { w: 0, h: 0 };
 let currentDpi = DEFAULT_PARAMS.dpi;
@@ -158,6 +160,8 @@ $<HTMLInputElement>('file').addEventListener('change', async (e) => {
     // pixels needed along the longest image side at the chosen dpi (for SVG rasterisation)
     const needed = (Math.max(p.imageWidthMm, p.imageWidthMm * (source ? source.height / source.width : 1)) / 25.4) * p.dpi * 1.5;
     setSource(await loadImage(f, needed));
+    sourceSvg = /\.svgz?$/i.test(f.name) || f.type === 'image/svg+xml' ? await f.text() : null;
+    $<HTMLButtonElement>('dlVector').disabled = sourceSvg === null;
     run();
   } catch (err) {
     warn.hidden = false;
@@ -174,6 +178,23 @@ dlPng.addEventListener('click', async () => {
 });
 dlSvg.addEventListener('click', () => {
   download(canvasToSvg(canvas, sizeMm.w, sizeMm.h), `${sourceName}-sphere.svg`);
+});
+
+$('dlVector').addEventListener('click', () => {
+  if (!sourceSvg) return;
+  try {
+    const r = warpSvgToVector(sourceSvg, readParams(), $<HTMLSelectElement>('orientation').value as 'rows' | 'cols');
+    const notes: string[] = [];
+    if (r.unsupported.length) notes.push(t('vectorUnsupported', { items: r.unsupported.join(', ') }));
+    if (r.clipped) notes.push(t('clipped'));
+    if (r.empty) notes.push(t('vectorNone'));
+    warn.hidden = notes.length === 0;
+    warn.textContent = notes.join(' ');
+    if (!r.empty) download(new Blob([r.svg], { type: 'image/svg+xml' }), `${sourceName}-sphere-vector.svg`);
+  } catch (err) {
+    warn.hidden = false;
+    warn.textContent = err instanceof Error ? t(err.message) : t('errLoad');
+  }
 });
 
 const sizeBy = $<HTMLSelectElement>('sizeBy');
@@ -255,6 +276,11 @@ function rotatedSource(angleDeg: number, imgW: number, imgH: number): { canvas: 
   return { canvas: rotCanvas, widthMm: wMm, heightMm: hMm };
 }
 
+function clearSvg(): void {
+  sourceSvg = null;
+  $<HTMLButtonElement>('dlVector').disabled = true;
+}
+
 function setSource(img: ImageData): void {
   source = img;
   srcCanvas.width = img.width;
@@ -267,12 +293,14 @@ $<HTMLSelectElement>('previewMode').addEventListener('change', (e) =>
 );
 
 $('sampleBtn').addEventListener('click', () => {
+  clearSvg();
   sourceName = 'sample';
   setSource(makeSample());
   run();
 });
 
 $('calBtn').addEventListener('click', () => {
+  clearSvg();
   sourceName = 'calibration';
   setSource(makeCalibrationPattern());
   $<HTMLSelectElement>('sizeBy').value = 'width';

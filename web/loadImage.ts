@@ -9,24 +9,31 @@ function parseLen(v: string | null): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-/** Work out the SVG's intrinsic aspect from viewBox, falling back to width/height; make both explicit. */
-function prepareSvg(text: string, targetSide: number): string {
+/** The SVG's coordinate box [x, y, width, height]: its viewBox, else 0 0 width height. */
+export function svgViewBox(svg: Element): [number, number, number, number] {
+  const vb = svg.getAttribute('viewBox')?.trim().split(/[\s,]+/).map(Number);
+  if (vb && vb.length === 4 && vb[2]! > 0 && vb[3]! > 0 && vb.every(Number.isFinite)) {
+    return [vb[0]!, vb[1]!, vb[2]!, vb[3]!];
+  }
+  const w = parseLen(svg.getAttribute('width'));
+  const h = parseLen(svg.getAttribute('height'));
+  if (!w || !h) throw new Error('errSvgSize');
+  return [0, 0, w, h];
+}
+
+/** Parse SVG text, rejecting anything that is not a well-formed svg document. */
+export function parseSvg(text: string): Element {
   const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
   const svg = doc.documentElement;
   if (svg.localName !== 'svg' || doc.querySelector('parsererror')) throw new Error('errInvalidSvg');
+  return svg;
+}
 
-  let w = 0;
-  let h = 0;
-  const vb = svg.getAttribute('viewBox')?.trim().split(/[\s,]+/).map(Number);
-  if (vb && vb.length === 4 && vb[2]! > 0 && vb[3]! > 0) {
-    [w, h] = [vb[2]!, vb[3]!];
-  } else {
-    w = parseLen(svg.getAttribute('width')) ?? 0;
-    h = parseLen(svg.getAttribute('height')) ?? 0;
-  }
-  if (!w || !h) throw new Error('errSvgSize');
-  if (!svg.hasAttribute('viewBox')) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-
+/** Make the SVG's size explicit so browsers rasterise it at the target size. */
+function prepareSvg(text: string, targetSide: number): string {
+  const svg = parseSvg(text);
+  const [vx, vy, w, h] = svgViewBox(svg);
+  if (!svg.hasAttribute('viewBox')) svg.setAttribute('viewBox', `${vx} ${vy} ${w} ${h}`);
   const scale = targetSide / Math.max(w, h);
   svg.setAttribute('width', String(Math.round(w * scale)));
   svg.setAttribute('height', String(Math.round(h * scale)));
