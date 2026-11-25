@@ -35,5 +35,5 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Scope decisions: no G-code generation, no roller-drive kinematics.
 
 ### Fixed
-- The flat preview keeps its displayed size when the resolution (dpi) changes.
+- The flat preview has a fixed frame, so changing the resolution or the image size no longer changes its displayed size.
 - The "without warp" 3D view respects the rotation axis direction in the image.
