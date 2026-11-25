@@ -7,7 +7,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Download counter in the footer: each PNG/SVG/vector download increments a public number (Abacus hit-counter API; only the count is sent, never the image or visitor data). Hidden if the service is unreachable.
+- Download counter in the footer: each PNG/SVG/vector download increments a public number (GoatCounter event; cookie-free, nothing about the image or visitor is sent). Hidden if the service is unreachable.
 - Drop zone in the controls: drag an image (PNG, JPG, SVG, ...) onto it to load it.
 - "Reset settings" button that puts all settings back to the defaults of the first preset.
 - Settings are remembered between visits and kept in the URL hash, so a setup can be shared by copying the address (the image itself is not included).

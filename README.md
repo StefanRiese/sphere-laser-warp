@@ -14,7 +14,7 @@ A browser tool that pre-distorts a flat image so that, once engraved on a ball
 
 **Use it:** https://stefanriese.github.io/sphere-laser-warp/
 
-Everything runs client-side as a static site on GitHub Pages. Images are never uploaded. The only network call is an anonymous download counter (a bare number, no visitor data).
+Everything runs client-side as a static site on GitHub Pages. Images are never uploaded. The only network calls are a cookie-free download counter (GoatCounter: one event per download, no image data).
 The interface is available in English and German and in a light or dark theme (switches in the top right; the theme follows the system by default).
 
 ## Usage

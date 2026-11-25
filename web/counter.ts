@@ -1,37 +1,44 @@
 /**
- * Usage counter: counts downloads (PNG, SVG, vector SVG) with the keyless hit-counter
- * API of Abacus. Only a number is incremented; nothing about the visitor or the image is sent.
- * Failures (offline, blocked, service gone) are ignored; the counter just stays hidden.
+ * Usage counter: counts downloads (PNG, SVG, vector SVG) as one GoatCounter event.
+ * GoatCounter is cookie-free and stores no personal data; only the event name is sent.
+ * The displayed number comes from its public counter endpoint (setting "Allow using the
+ * visitor counter" must be on). Failures (offline, blocked, service gone) are ignored;
+ * the counter just stays hidden.
  */
-const BASE = 'https://abacus.jasoncameron.dev';
-const KEY = 'sphere-laser-warp/downloads';
+const SITE = 'https://stefanriese.goatcounter.com';
+const EVENT = 'download';
 
-async function call(action: 'info' | 'hit'): Promise<number | null> {
+function show(text: string | null): void {
+  const el = document.getElementById('useCount');
+  if (!el || text === null) return;
+  el.hidden = false;
+  el.querySelector('b')!.textContent = text;
+}
+
+async function read(): Promise<string | null> {
   try {
-    const res = await fetch(`${BASE}/${action}/${KEY}`, { cache: 'no-store' });
+    const res = await fetch(`${SITE}/counter/${EVENT}.json`, { cache: 'no-store' });
+    if (res.status === 404) return '0'; // nothing counted yet
     if (!res.ok) return null;
-    const v = (await res.json()).value;
-    // /info reports -1 for a counter that has not been hit yet
-    return typeof v === 'number' ? Math.max(0, v) : null;
+    const c = (await res.json()).count;
+    return typeof c === 'string' || typeof c === 'number' ? String(c) : null;
   } catch {
     return null;
   }
 }
 
-function show(n: number | null): void {
-  const el = document.getElementById('useCount');
-  if (!el || n === null) return;
-  el.dataset.n = String(n);
-  el.hidden = false;
-  el.querySelector('b')!.textContent = n.toLocaleString();
-}
-
 /** Show the current count (call once on start). */
 export async function loadCount(): Promise<void> {
-  show(await call('info'));
+  show(await read());
 }
 
-/** Count one use and update the displayed number. */
+/** Count one use, then refresh the displayed number. */
 export async function countUse(): Promise<void> {
-  show(await call('hit'));
+  await new Promise<void>((resolve) => {
+    const img = new Image();
+    img.onload = img.onerror = () => resolve();
+    img.src = `${SITE}/count?p=${EVENT}&e=true&t=Download&rnd=${Math.random().toString(36).slice(2)}`;
+    setTimeout(resolve, 5000);
+  });
+  show(await read());
 }
