@@ -8,7 +8,6 @@
     "orientation": "rows",
     "axisAngleDeg": 90,
     "offsetAxisMm": 0,
-    "mirror": false,
     "flipRotation": false
   }
 }

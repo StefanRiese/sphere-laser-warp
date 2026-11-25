@@ -48,17 +48,6 @@ describe('warp', () => {
     expect(r.clipped).toBe(true);
   });
 
-  it('mirror flips the image around the axis', () => {
-    const img = solid(2, 1, [0, 0, 0, 255]);
-    img.data.set([255, 0, 0, 255], 0); // left red, right black
-    const a = warp(img, { ...base, imageWidthMm: 20, mirror: false });
-    const b = warp(img, { ...base, imageWidthMm: 20, mirror: true });
-    const px = (r: typeof a, col: number) => r.data[(Math.floor(r.height / 2) * r.width + col) * 4]!;
-    const left = Math.floor(a.width / 2) - 3, right = Math.floor(a.width / 2) + 3;
-    expect(px(a, left)).toBeGreaterThan(px(a, right));
-    expect(px(b, left)).toBeLessThan(px(b, right));
-  });
-
   it('reports the rotation range covered by the output rows', () => {
     const r = warp(solid(40, 40, [255, 0, 0, 255]), { ...base, imageWidthMm: 20 });
     expect(r.theta0 + r.thetaSpan / 2).toBeCloseTo(0, 1); // centred on the view direction

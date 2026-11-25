@@ -14,8 +14,6 @@ export interface WarpParams {
   projection: Projection;
   /** Output resolution in pixels per inch. */
   dpi: number;
-  /** Mirror the image (e.g. engraving the inside of a bauble). */
-  mirror: boolean;
   /** Reverse the rotation direction. */
   flipRotation: boolean;
   /** Which image direction runs along the rotation axis, in degrees counter-clockwise from horizontal. */
@@ -43,7 +41,6 @@ export const DEFAULT_PARAMS: WarpParams = {
   imageWidthMm: 40,
   projection: 'equidistant',
   dpi: 254,
-  mirror: false,
   flipRotation: false,
   axisAngleDeg: 0,
   offsetAxisMm: 0,
@@ -159,11 +156,10 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
       const x = xa + (col + 0.5) * mmPerPx;
       const q = surfaceToPlane(p.projection, R, x, theta, pl);
       if (!q) continue;
-      // rotate so the chosen image direction runs along the axis, then optionally mirror
+      // rotate so the chosen image direction runs along the axis
       const ui = q.u * ca - q.v * sa;
       const vi = q.u * sa + q.v * ca;
-      const u = p.mirror ? -ui : ui;
-      const fx = (u / imgW + 0.5) * src.width;
+      const fx = (ui / imgW + 0.5) * src.width;
       const fy = (0.5 - vi / imgH) * src.height;
       if (fx < 0 || fy < 0 || fx > src.width || fy > src.height) continue;
       const o = (row * width + col) * 4;

@@ -72,7 +72,6 @@ function readParams(): WarpParams {
     imageWidthMm: imageWidthMm(),
     projection: $<HTMLSelectElement>('projection').value as Projection,
     dpi: num('dpi', DEFAULT_PARAMS.dpi),
-    mirror: $<HTMLInputElement>('mirror').checked,
     flipRotation: $<HTMLInputElement>('flipRotation').checked,
     axisAngleDeg: numAny('axisAngleDeg', 0),
     offsetAxisMm: numAny('offsetAxisMm', 0),
@@ -142,7 +141,6 @@ worker.onmessage = (e: MessageEvent) => {
         ? {
             ...rotatedSource(p.axisAngleDeg, imgW, imgH),
             offsetAxisMm: p.offsetAxisMm,
-            mirror: p.mirror,
             rotationSign: p.flipRotation ? -1 : 1,
           }
         : null,

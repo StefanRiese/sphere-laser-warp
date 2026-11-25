@@ -19,7 +19,6 @@ export interface NaiveInfo {
   widthMm: number;
   heightMm: number;
   offsetAxisMm: number;
-  mirror: boolean;
   rotationSign: 1 | -1;
 }
 
@@ -73,7 +72,7 @@ export class BallPreview {
     this.disposePatch(this.warpMesh);
     this.warpMesh = this.makePatch(info.R, {
       xa: info.xStart, xb: info.xStart + info.widthMm, theta0: info.theta0, thetaSpan: info.thetaSpan,
-      canvas: textureCanvas, flipU: false,
+      canvas: textureCanvas,
     });
     this.disposePatch(this.naiveMesh);
     this.naiveMesh = null;
@@ -83,7 +82,7 @@ export class BallPreview {
       this.naiveMesh = this.makePatch(info.R, {
         xa: naive.offsetAxisMm - naive.widthMm / 2, xb: naive.offsetAxisMm + naive.widthMm / 2,
         theta0: (-naive.rotationSign * span) / 2, thetaSpan: naive.rotationSign * span,
-        canvas: naive.canvas, flipU: naive.mirror,
+        canvas: naive.canvas,
       });
     }
     this.applyMode();
@@ -155,7 +154,7 @@ export class BallPreview {
    */
   private makePatch(
     R0: number,
-    o: { xa: number; xb: number; theta0: number; thetaSpan: number; canvas: HTMLCanvasElement | OffscreenCanvas; flipU: boolean },
+    o: { xa: number; xb: number; theta0: number; thetaSpan: number; canvas: HTMLCanvasElement | OffscreenCanvas },
   ): THREE.Mesh {
     const texture = new THREE.CanvasTexture(o.canvas as HTMLCanvasElement);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -184,7 +183,7 @@ export class BallPreview {
         const phi = Math.asin(Math.max(-1, Math.min(1, x / R0)));
         const r = R * Math.cos(phi);
         pos.push(R * Math.sin(phi), -r * Math.sin(theta), r * Math.cos(theta));
-        uv.push(o.flipU ? 1 - u : u, 1 - v);
+        uv.push(u, 1 - v);
       }
     }
     for (let j = 0; j < M; j++) {

@@ -26,7 +26,6 @@ const en = {
   dpi: 'Resolution (dpi)',
   ballColor: 'Ball colour (3D preview only)',
   showAxis: 'Show rotation axis in 3D preview',
-  mirror: 'Mirror (engrave from the inside)',
   flipRotation: 'Reverse rotation direction',
   orientation: 'Export orientation',
   orientRows: 'Rotation along image height (axis horizontal)',
@@ -48,7 +47,7 @@ const en = {
   modeWarp: 'With warp (corrected, what you will engrave)',
   modeNaive: 'Without warp (original image engraved as is)',
   hint3d:
-    'Drag to rotate, scroll to zoom. The blue line is the rotation axis and the orange arrow shows which way the ball’s surface turns at the front while the file is engraved in order (first row to last row). “Without warp” shows the original image imported into the rotary unchanged, with the same size and the object diameter set to the ball: stretched toward the ends of the ball. “With warp” is how your corrected file should look (from the outside). With “Mirror” on, look at the ball from the back, as through the glass.',
+    'Drag to rotate, scroll to zoom. The blue line is the rotation axis and the orange arrow shows which way the ball’s surface turns at the front while the file is engraved in order (first row to last row). “Without warp” shows the original image imported into the rotary unchanged, with the same size and the object diameter set to the ball: stretched toward the ends of the ball. “With warp” is how your corrected file should look (from the outside).',
   computing: 'Computing...',
   webgl: '3D preview needs WebGL, which is not available in this browser.',
   clipped: 'Part of the image does not fit on the visible side of the ball and was cut off. Reduce the image size or move it.',
@@ -95,7 +94,6 @@ const de: Record<Key, string> = {
   dpi: 'Auflösung (dpi)',
   ballColor: 'Kugelfarbe (nur 3D-Vorschau)',
   showAxis: 'Drehachse in der 3D-Vorschau anzeigen',
-  mirror: 'Spiegeln (von innen gravieren)',
   flipRotation: 'Drehrichtung umkehren',
   orientation: 'Exportausrichtung',
   orientRows: 'Drehung entlang der Bildhöhe (Achse waagerecht)',
@@ -117,7 +115,7 @@ const de: Record<Key, string> = {
   modeWarp: 'Mit Vorverzerrung (korrigiert, so wird graviert)',
   modeNaive: 'Ohne Vorverzerrung (Originalbild unverändert graviert)',
   hint3d:
-    'Ziehen zum Drehen, Scrollen zum Zoomen. Die blaue Linie ist die Drehachse, der orange Pfeil zeigt, in welche Richtung sich die Kugeloberfläche vorne dreht, während die Datei der Reihe nach graviert wird (erste bis letzte Zeile). „Ohne Vorverzerrung“ zeigt das unveränderte Originalbild, wie es in die Rotationseinheit importiert würde, mit gleicher Größe und dem Kugeldurchmesser als Objektdurchmesser: zu den Kugelenden hin gestreckt. „Mit Vorverzerrung“ zeigt, wie die korrigierte Datei aussehen sollte (von außen). Bei aktiviertem „Spiegeln“ die Kugel von hinten betrachten, wie durch das Glas.',
+    'Ziehen zum Drehen, Scrollen zum Zoomen. Die blaue Linie ist die Drehachse, der orange Pfeil zeigt, in welche Richtung sich die Kugeloberfläche vorne dreht, während die Datei der Reihe nach graviert wird (erste bis letzte Zeile). „Ohne Vorverzerrung“ zeigt das unveränderte Originalbild, wie es in die Rotationseinheit importiert würde, mit gleicher Größe und dem Kugeldurchmesser als Objektdurchmesser: zu den Kugelenden hin gestreckt. „Mit Vorverzerrung“ zeigt, wie die korrigierte Datei aussehen sollte (von außen).',
   computing: 'Berechne...',
   webgl: 'Die 3D-Vorschau benötigt WebGL, das in diesem Browser nicht verfügbar ist.',
   clipped: 'Ein Teil des Bildes passt nicht auf die sichtbare Seite der Kugel und wurde abgeschnitten. Bild verkleinern oder verschieben.',
