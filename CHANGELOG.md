@@ -6,6 +6,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- The "without warp" 3D view now respects the rotation axis direction in the image.
+
 ### Removed
 - Latitude limit and its 3D overlay. The output is cropped to the image footprint; the info line shows how far from the equator the image reaches.
 

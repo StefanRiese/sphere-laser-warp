@@ -23,6 +23,7 @@ let reqId = 0;
 let sizeMm = { w: 0, h: 0 };
 let currentDpi = DEFAULT_PARAMS.dpi;
 const rawCanvas = document.createElement('canvas'); // warped result without background, for the 3D texture
+const rotCanvas = document.createElement('canvas'); // srcCanvas turned by the axis angle, for the "without warp" view
 const srcCanvas = document.createElement('canvas'); // the original image, for the "without warp" 3D view
 let preview: BallPreview | null = null;
 let previewLoading: Promise<BallPreview | null> | null = null;
@@ -137,9 +138,7 @@ worker.onmessage = (e: MessageEvent) => {
       rawCanvas,
       source
         ? {
-            canvas: srcCanvas,
-            widthMm: imgW,
-            heightMm: imgH,
+            ...rotatedSource(p.axisAngleDeg, imgW, imgH),
             offsetAxisMm: p.offsetAxisMm,
             mirror: p.mirror,
             rotationSign: p.flipRotation ? -1 : 1,
@@ -225,6 +224,29 @@ presetSel.addEventListener('change', () => {
 if (presets.length > 0) {
   presetSel.value = '0';
   presetSel.dispatchEvent(new Event('change'));
+}
+
+/**
+ * The original image turned so that its chosen axis direction runs along the rotation axis, as it would be
+ * exported without any warp. Returns the (possibly enlarged) canvas and its physical size in mm.
+ */
+function rotatedSource(angleDeg: number, imgW: number, imgH: number): { canvas: HTMLCanvasElement; widthMm: number; heightMm: number } {
+  if (angleDeg % 360 === 0) return { canvas: srcCanvas, widthMm: imgW, heightMm: imgH };
+  const a = (angleDeg * Math.PI) / 180;
+  const c = Math.abs(Math.cos(a));
+  const s = Math.abs(Math.sin(a));
+  const wMm = imgW * c + imgH * s;
+  const hMm = imgW * s + imgH * c;
+  const pxPerMm = Math.min(srcCanvas.width / imgW, 4096 / Math.max(wMm, hMm));
+  rotCanvas.width = Math.max(1, Math.ceil(wMm * pxPerMm));
+  rotCanvas.height = Math.max(1, Math.ceil(hMm * pxPerMm));
+  const g = rotCanvas.getContext('2d')!;
+  g.clearRect(0, 0, rotCanvas.width, rotCanvas.height);
+  g.translate(rotCanvas.width / 2, rotCanvas.height / 2);
+  g.rotate(a); // screen rotation is clockwise: the image's +angle direction (counter-clockwise) ends up horizontal
+  g.drawImage(srcCanvas, (-imgW * pxPerMm) / 2, (-imgH * pxPerMm) / 2, imgW * pxPerMm, imgH * pxPerMm);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  return { canvas: rotCanvas, widthMm: wMm, heightMm: hMm };
 }
 
 function setSource(img: ImageData): void {
