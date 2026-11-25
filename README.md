@@ -97,17 +97,6 @@ npm run build      # typecheck + production build into dist/
 Stack: TypeScript, Vite, a Web Worker for the warp, three.js (lazy-loaded) for the 3D preview.
 Pushes to `main` run the tests and deploy to GitHub Pages through GitHub Actions.
 
-## Roadmap
-
-- [x] Upload (raster and SVG), live warp preview, PNG and SVG export
-- [x] 3D ball preview with rotation axis and without-warp comparison
-- [x] Machine presets, English and German UI
-- [x] SVG path warp (true vector output)
-- [x] Settings remembered and shareable through the URL hash
-- [ ] Tiled mode for large images
-
-Out of scope: G-code generation and roller-drive rotaries.
-
 ## Support
 
 The tool is free. If it saved you some test balls, you can [donate via PayPal.me](https://www.paypal.me/stefanriese) (the "Donate" / "Spenden" button on the site does the same).
