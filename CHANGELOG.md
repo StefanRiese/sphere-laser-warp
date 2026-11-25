@@ -7,6 +7,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Latitude-limit overlay in the 3D preview: red zones and rings beyond the limit, with a toggle.
 - Interactive 3D ball preview (three.js, lazy-loaded) showing the engraving wrapped on the ball, with a ball colour picker.
 - SVG files can be uploaded; they are rasterised at a resolution matched to the output.
 - Vite + TypeScript app with a Web Worker warp, live preview, PNG export (with DPI metadata) and SVG export (mm size, embedded raster).

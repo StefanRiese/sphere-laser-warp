@@ -8,6 +8,8 @@ export interface OverlayInfo {
   xMax: number;
   theta0: number;
   thetaSpan: number;
+  /** Latitude limit in degrees from the equator along the rotation axis. */
+  latitudeLimitDeg: number;
 }
 
 /** Orbitable 3D ball showing the engraved result wrapped on its surface. */
@@ -19,6 +21,8 @@ export class BallPreview {
   private ball: THREE.Mesh | null = null;
   private overlay: THREE.Mesh | null = null;
   private texture: THREE.CanvasTexture | null = null;
+  private limit: THREE.Group | null = null;
+  private showLimit = true;
   private color = '#9b1c1c';
   private radius = 0;
   private raf = 0;
@@ -53,6 +57,13 @@ export class BallPreview {
   update(info: OverlayInfo, textureCanvas: HTMLCanvasElement): void {
     if (info.R !== this.radius) this.rebuildBall(info.R);
     this.rebuildOverlay(info, textureCanvas);
+    this.rebuildLimit(info.R, info.latitudeLimitDeg);
+    this.render();
+  }
+
+  setLimitVisible(visible: boolean): void {
+    this.showLimit = visible;
+    if (this.limit) this.limit.visible = visible;
     this.render();
   }
 
@@ -133,6 +144,47 @@ export class BallPreview {
       }),
     );
     this.scene.add(this.overlay);
+  }
+
+  /** Tinted caps beyond the latitude limit (spot elongates and defocuses there) plus a ring at each limit. */
+  private rebuildLimit(R: number, limitDeg: number): void {
+    if (this.limit) {
+      this.limit.traverse((o) => {
+        const m = o as THREE.Mesh;
+        m.geometry?.dispose();
+        (m.material as THREE.Material | undefined)?.dispose();
+      });
+      this.scene.remove(this.limit);
+    }
+    const lim = (limitDeg * Math.PI) / 180;
+    const group = new THREE.Group();
+    group.visible = this.showLimit;
+    const rr = R * 1.004;
+    const capLen = Math.PI / 2 - lim;
+    const tint = new THREE.MeshBasicMaterial({
+      color: 0xff3b30,
+      transparent: true,
+      opacity: 0.3,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+    });
+    if (capLen > 0.001) {
+      // SphereGeometry's poles lie on local Y; the group is rotated below so they lie on the rotation axis (X)
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(rr, 96, 16, 0, Math.PI * 2, 0, capLen), tint));
+      group.add(new THREE.Mesh(new THREE.SphereGeometry(rr, 96, 16, 0, Math.PI * 2, Math.PI - capLen, capLen), tint.clone()));
+    }
+    const ringMat = new THREE.LineBasicMaterial({ color: 0xff3b30 });
+    for (const sign of [1, -1]) {
+      const pts: THREE.Vector3[] = [];
+      for (let i = 0; i < 128; i++) {
+        const a = (i / 128) * Math.PI * 2;
+        pts.push(new THREE.Vector3(rr * Math.cos(lim) * Math.cos(a), sign * rr * Math.sin(lim), rr * Math.cos(lim) * Math.sin(a)));
+      }
+      group.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(pts), ringMat));
+    }
+    group.rotation.z = -Math.PI / 2; // local +Y -> world +X
+    this.limit = group;
+    this.scene.add(group);
   }
 
   private resize(): void {
