@@ -75,13 +75,6 @@ describe('warp', () => {
     expect((centroid(b).x - a.x) * b.mmPerPx).toBeLessThan(9);
   });
 
-  it('offsetRotationDeg moves the image around the ball, even to the back', () => {
-    const img = solid(20, 20, [255, 0, 0, 255]);
-    const r = warp(img, { ...base, imageWidthMm: 10, offsetRotationDeg: 180 });
-    expect(r.height).toBeLessThan(base.ballDiameterMm * Math.PI * 0.4 / r.mmPerPx); // not split at the wrap
-    expect(Math.abs(r.theta0 + r.thetaSpan / 2 - Math.PI)).toBeLessThan(0.1);
-  });
-
   it('axisAngleDeg 90 makes the image height run along the axis', () => {
     const img = solid(40, 10, [0, 0, 255, 255]); // wide image
     const flat = warp(img, { ...base, imageWidthMm: 30 });

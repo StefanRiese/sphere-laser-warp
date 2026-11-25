@@ -8,7 +8,6 @@ export interface PresetParams {
   orientation?: 'rows' | 'cols';
   axisAngleDeg?: number;
   offsetAxisMm?: number;
-  offsetRotationDeg?: number;
   mirror?: boolean;
   flipRotation?: boolean;
 }

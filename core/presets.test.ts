@@ -6,7 +6,7 @@ const dir = join(__dirname, '..', 'presets');
 const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
 const allowed = new Set([
   'ballDiameterMm', 'projection', 'latitudeLimitDeg', 'dpi', 'orientation',
-  'axisAngleDeg', 'offsetAxisMm', 'offsetRotationDeg', 'mirror', 'flipRotation',
+  'axisAngleDeg', 'offsetAxisMm', 'mirror', 'flipRotation',
 ]);
 
 describe('presets', () => {

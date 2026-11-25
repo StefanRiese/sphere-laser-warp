@@ -22,7 +22,7 @@ xTool Creative Space or LightBurn. Roller-drive kinematics is out of scope unles
 - Ball radius R, horizontal rotary axis, beam from the top.
 - Axis position `x = R·sin φ`, rotation `θ = λ`.
 - Versus a cylinder of equal diameter: width scale `1/cos φ`, height scale `cos φ`.
-- Image placement: `axisAngleDeg` picks which image direction runs along the axis; `offsetAxisMm`/`offsetRotationDeg` move the image centre on the ball (sphere is rotated so the centre sits at the projection pole).
+- Image placement: `axisAngleDeg` picks which image direction runs along the axis; `offsetAxisMm` moves the image centre along the axis (sphere is rotated so the centre sits at the projection pole).
 - Canonical warp output: columns = axis, rows = rotation. The export may be transposed (`transpose()`); the 3D preview always uses the canonical layout.
 - Image size can be defined by width or height; core only takes `imageWidthMm`.
 - Projections: azimuthal equidistant (default), stereographic, Lambert equal-area.

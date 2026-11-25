@@ -24,8 +24,6 @@ export interface WarpParams {
   axisAngleDeg: number;
   /** Shift of the image centre along the rotation axis in mm (from the ball's centre plane). */
   offsetAxisMm: number;
-  /** Rotation of the image centre around the ball in degrees (0 = facing the viewer). */
-  offsetRotationDeg: number;
 }
 
 export interface WarpResult extends RGBAImage {
@@ -50,7 +48,6 @@ export const DEFAULT_PARAMS: WarpParams = {
   flipRotation: false,
   axisAngleDeg: 0,
   offsetAxisMm: 0,
-  offsetRotationDeg: 0,
 };
 
 function sampleBilinear(src: RGBAImage, fx: number, fy: number, out: Uint8ClampedArray, o: number): void {
@@ -128,7 +125,7 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
   const sa = Math.sin(alpha);
   const pl: Placement = {
     phi: Math.asin(Math.max(-1, Math.min(1, p.offsetAxisMm / R))),
-    theta: (p.offsetRotationDeg * Math.PI) / 180,
+    theta: 0,
   };
 
   // Pass 1: find which rows (rotation angles) contain any part of the image, so we only emit those.

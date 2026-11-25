@@ -69,7 +69,6 @@ function readParams(): WarpParams {
     flipRotation: $<HTMLInputElement>('flipRotation').checked,
     axisAngleDeg: numAny('axisAngleDeg', 0),
     offsetAxisMm: numAny('offsetAxisMm', 0),
-    offsetRotationDeg: numAny('offsetRotationDeg', 0),
   };
 }
 
