@@ -10,6 +10,7 @@ import type { BallPreview } from './preview3d';
 import { applyStatic, fmt, getLang, onLangChange, setLang, t } from './i18n';
 import type { Lang } from './strings';
 import { effectiveTheme, setTheme } from './theme';
+import { countUse, loadCount } from './counter';
 import { resetSettings, restoreSettings, saveSettings } from './settings';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -195,9 +196,11 @@ document.querySelectorAll('.controls input:not(#file), .controls select').forEac
 
 dlPng.addEventListener('click', async () => {
   download(await canvasToPng(canvas, currentDpi), `${sourceName}-sphere.png`);
+  void countUse();
 });
 dlSvg.addEventListener('click', () => {
   download(canvasToSvg(canvas, sizeMm.w, sizeMm.h), `${sourceName}-sphere.svg`);
+  void countUse();
 });
 
 $('dlVector').addEventListener('click', () => {
@@ -210,7 +213,10 @@ $('dlVector').addEventListener('click', () => {
     if (r.empty) notes.push(t('vectorNone'));
     warn.hidden = notes.length === 0;
     warn.textContent = notes.join(' ');
-    if (!r.empty) download(new Blob([r.svg], { type: 'image/svg+xml' }), `${sourceName}-sphere-vector.svg`);
+    if (!r.empty) {
+      download(new Blob([r.svg], { type: 'image/svg+xml' }), `${sourceName}-sphere-vector.svg`);
+      void countUse();
+    }
   } catch (err) {
     warn.hidden = false;
     warn.textContent = err instanceof Error ? t(err.message) : t('errLoad');
@@ -362,6 +368,7 @@ onLangChange(() => {
   run();
 });
 applyStatic();
+void loadCount();
 updateSizeLabel();
 updateFileHint();
 

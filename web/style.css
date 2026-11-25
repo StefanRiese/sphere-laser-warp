@@ -50,3 +50,5 @@ a.donate { padding: 6px 14px; border-radius: 6px; background: var(--accent); col
 a.donate:hover { filter: brightness(1.1); }
 a.ghlink { color: inherit; font-size: .9rem; text-decoration: underline; }
 a.ghlink:hover { text-decoration: none; }
+
+footer { max-width: 1100px; margin: 0 auto; padding-top: 8px; text-align: center; }
