@@ -1,0 +1,21 @@
+{
+  "name": "xTool M1 + RA2 Pro (chuck)",
+  "description": "xTool M1 diode laser with the RA2 Pro rotary in chuck mode, using xTool Studio.",
+  "notes": [
+    "The RA2 Pro replaces the Y axis, so the rotation runs along the image height.",
+    "In rotary mode set the object diameter to the ball diameter.",
+    "A diode laser marks coatings and paint, not clear glass: engrave the coating on the bauble or a painted layer.",
+    "Focus on the top of the ball. Keep the latitude limit modest, the spot defocuses and stretches away from the top."
+  ],
+  "params": {
+    "projection": "equidistant",
+    "latitudeLimitDeg": 30,
+    "dpi": 254,
+    "orientation": "rows",
+    "axisAngleDeg": 0,
+    "offsetAxisMm": 0,
+    "offsetRotationDeg": 0,
+    "mirror": false,
+    "flipRotation": false
+  }
+}

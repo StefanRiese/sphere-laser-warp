@@ -1,5 +1,6 @@
 import { DEFAULT_PARAMS, type WarpParams, transpose } from '../core/warp';
 import type { Projection } from '../core/projection';
+import { presets, type PresetParams } from './presets';
 import { loadImage } from './loadImage';
 import { canvasToPng, canvasToSvg, download } from './export';
 import type { WorkerRequest } from './warp.worker';
@@ -180,4 +181,35 @@ sizeBy.addEventListener('change', () => {
 function imageWidthMmFor(prevMode: 'width' | 'height', input: HTMLInputElement): number {
   const v = parseFloat(input.value) || DEFAULT_PARAMS.imageWidthMm;
   return prevMode === 'width' || !source ? v : (v * source.width) / source.height;
+}
+
+// --- machine presets ---
+const presetSel = $<HTMLSelectElement>('preset');
+const presetNotes = $('presetNotes');
+presetSel.add(new Option('Custom (no preset)', ''));
+presets.forEach((p, i) => presetSel.add(new Option(p.name, String(i))));
+
+function setField(id: string, value: string | number | boolean | undefined): void {
+  if (value === undefined) return;
+  const el = $<HTMLInputElement | HTMLSelectElement>(id);
+  if (el instanceof HTMLInputElement && el.type === 'checkbox') el.checked = Boolean(value);
+  else el.value = String(value);
+}
+
+function applyPreset(p: PresetParams): void {
+  for (const [k, v] of Object.entries(p)) setField(k, v);
+}
+
+presetSel.addEventListener('change', () => {
+  const preset = presetSel.value === '' ? null : presets[Number(presetSel.value)];
+  presetNotes.textContent = preset ? [preset.description, ...(preset.notes ?? [])].join(' ') : '';
+  if (!preset) return;
+  applyPreset(preset.params);
+  run();
+});
+
+// the first preset is the default for a fresh page
+if (presets.length > 0) {
+  presetSel.value = '0';
+  presetSel.dispatchEvent(new Event('change'));
 }

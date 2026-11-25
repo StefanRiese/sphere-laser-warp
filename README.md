@@ -60,7 +60,7 @@ generic PNG export.
 - [x] M1: image upload (raster and SVG), parameter form, live pre-warped preview, PNG and SVG export
 - [x] M2a: 3D ball preview
 - [x] M2b: latitude-limit overlay in the preview
-- [ ] M3: machine presets (xTool M1 + RA2 Pro chuck first); G-code and roller-drive maths are out of scope
+- [x] M3: machine presets (xTool M1 + RA2 Pro chuck included; add more as JSON files in `presets/`); G-code and roller-drive maths are out of scope
 - [ ] M4: SVG path warp, tiled-cap mode for large images
 - [ ] M5: calibration test pattern and fitting
 

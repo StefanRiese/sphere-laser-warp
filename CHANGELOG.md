@@ -7,6 +7,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Machine presets: JSON files in `presets/` are offered in a dropdown; includes xTool M1 + RA2 Pro (chuck).
 - Rotation axis in the 3D preview: axis line with end arrows and an arrow for the rotation direction (follows "Reverse rotation direction"), with a toggle.
 - Define the image size by width or height.
 - Define the rotation axis direction in the image (any angle), the image position along and around the ball, and the export orientation (rotation along image height or width).
