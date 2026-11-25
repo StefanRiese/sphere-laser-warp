@@ -29,6 +29,7 @@ function getPreview(): Promise<BallPreview | null> {
       preview = new m.BallPreview($('ball3d'));
       preview.setBallColor($<HTMLInputElement>('ballColor').value);
       preview.setLimitVisible($<HTMLInputElement>('showLimit').checked);
+      preview.setAxisVisible($<HTMLInputElement>('showAxis').checked);
       return preview;
     })
     .catch(() => {
@@ -127,13 +128,14 @@ worker.onmessage = (e: MessageEvent) => {
   const p = readParams();
   void getPreview().then((pv) =>
     pv?.update(
-      { R: p.ballDiameterMm / 2, xMax: r.widthMm / 2, theta0: r.theta0, thetaSpan: r.thetaSpan, latitudeLimitDeg: p.latitudeLimitDeg },
+      { R: p.ballDiameterMm / 2, xMax: r.widthMm / 2, theta0: r.theta0, thetaSpan: r.thetaSpan, latitudeLimitDeg: p.latitudeLimitDeg, rotationSign: p.flipRotation ? -1 : 1 },
       rawCanvas,
     ),
   );
 };
 
 $<HTMLInputElement>('showLimit').addEventListener('input', (e) => preview?.setLimitVisible((e.target as HTMLInputElement).checked));
+$<HTMLInputElement>('showAxis').addEventListener('input', (e) => preview?.setAxisVisible((e.target as HTMLInputElement).checked));
 $<HTMLInputElement>('ballColor').addEventListener('input', (e) => preview?.setBallColor((e.target as HTMLInputElement).value));
 
 $<HTMLInputElement>('file').addEventListener('change', async (e) => {
@@ -152,7 +154,7 @@ $<HTMLInputElement>('file').addEventListener('change', async (e) => {
   }
 });
 
-document.querySelectorAll('.controls input:not(#file):not(#ballColor):not(#showLimit), .controls select').forEach((el) =>
+document.querySelectorAll('.controls input:not(#file):not(#ballColor):not(#showLimit):not(#showAxis), .controls select').forEach((el) =>
   el.addEventListener('input', () => (el.id === 'whiteBg' ? run() : schedule())),
 );
 

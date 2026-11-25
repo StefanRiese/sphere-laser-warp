@@ -10,6 +10,8 @@ export interface OverlayInfo {
   thetaSpan: number;
   /** Latitude limit in degrees from the equator along the rotation axis. */
   latitudeLimitDeg: number;
+  /** +1, or -1 when the rotation direction is reversed. */
+  rotationSign: 1 | -1;
 }
 
 /** Orbitable 3D ball showing the engraved result wrapped on its surface. */
@@ -23,6 +25,8 @@ export class BallPreview {
   private texture: THREE.CanvasTexture | null = null;
   private limit: THREE.Group | null = null;
   private showLimit = true;
+  private axis: THREE.Group | null = null;
+  private showAxis = true;
   private color = '#9b1c1c';
   private radius = 0;
   private raf = 0;
@@ -58,6 +62,13 @@ export class BallPreview {
     if (info.R !== this.radius) this.rebuildBall(info.R);
     this.rebuildOverlay(info, textureCanvas);
     this.rebuildLimit(info.R, info.latitudeLimitDeg);
+    this.rebuildAxis(info.R, info.rotationSign);
+    this.render();
+  }
+
+  setAxisVisible(visible: boolean): void {
+    this.showAxis = visible;
+    if (this.axis) this.axis.visible = visible;
     this.render();
   }
 
@@ -86,9 +97,9 @@ export class BallPreview {
       new THREE.MeshStandardMaterial({ color: this.color, roughness: 0.25, metalness: 0.35 }),
     );
     this.scene.add(this.ball);
-    if (first) this.camera.position.set(0, 0, R * 4.2);
+    if (first) this.camera.position.set(R * 0.6, R * 0.5, R * 4.6);
     this.controls.minDistance = R * 1.6;
-    this.controls.maxDistance = R * 10;
+    this.controls.maxDistance = R * 12;
   }
 
   private rebuildOverlay(info: OverlayInfo, canvas: HTMLCanvasElement): void {
@@ -185,6 +196,90 @@ export class BallPreview {
     group.rotation.z = -Math.PI / 2; // local +Y -> world +X
     this.limit = group;
     this.scene.add(group);
+  }
+
+  private static disposeGroup(g: THREE.Object3D): void {
+    g.traverse((o) => {
+      const m = o as THREE.Mesh;
+      m.geometry?.dispose();
+      const mat = m.material as (THREE.Material & { map?: THREE.Texture | null }) | undefined;
+      mat?.map?.dispose();
+      mat?.dispose();
+    });
+  }
+
+  private label(text: string, R: number): THREE.Sprite {
+    const c = document.createElement('canvas');
+    c.width = 320;
+    c.height = 64;
+    const g = c.getContext('2d')!;
+    g.font = 'bold 34px system-ui, sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.lineWidth = 7;
+    g.strokeStyle = 'rgba(0,0,0,0.7)';
+    g.strokeText(text, 160, 32);
+    g.fillStyle = '#fff';
+    g.fillText(text, 160, 32);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+    sp.scale.set(R * 1.1, R * 0.22, 1);
+    sp.renderOrder = 10;
+    return sp;
+  }
+
+  /** The rotation axis (X) with end arrows and labels, plus an arrow showing the rotation direction. */
+  private rebuildAxis(R: number, sign: 1 | -1): void {
+    if (this.axis) {
+      BallPreview.disposeGroup(this.axis);
+      this.scene.remove(this.axis);
+    }
+    const g = new THREE.Group();
+    g.visible = this.showAxis;
+    const axisMat = new THREE.MeshBasicMaterial({ color: 0x2f80ed });
+    const rotMat = new THREE.MeshBasicMaterial({ color: 0xffa31a });
+    const L = R * 1.5;
+    const t = R * 0.012;
+
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(t, t, 2 * L, 12), axisMat);
+    shaft.rotation.z = Math.PI / 2; // cylinder's Y -> X
+    g.add(shaft);
+    for (const s of [1, -1]) {
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(R * 0.045, R * 0.14, 16), axisMat);
+      cone.position.x = s * (L + R * 0.05);
+      cone.rotation.z = -s * (Math.PI / 2); // tip points away from the ball
+      g.add(cone);
+      const lab = this.label(s > 0 ? 'axis +' : 'axis -', R);
+      lab.position.set(s * (L + R * 0.45), R * 0.14, 0);
+      g.add(lab);
+    }
+
+    // rotation direction: arc around the axis beyond the + end, running the way the ball's surface moves.
+    // File rows advance in theta by `sign`, i.e. the point under the beam has theta = sign * progress, so the
+    // material moves toward decreasing circle angle: surface point = (x, -r sin(theta), r cos(theta)).
+    const x0 = L - R * 0.35;
+    const rho = R * 0.42;
+    const pts: THREE.Vector3[] = [];
+    const steps = 48;
+    const span = Math.PI * 1.5;
+    for (let i = 0; i <= steps; i++) {
+      const th = -sign * (i / steps) * span;
+      pts.push(new THREE.Vector3(x0, -rho * Math.sin(th), rho * Math.cos(th)));
+    }
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 96, t * 1.4, 8), rotMat));
+    const tip = pts[pts.length - 1]!;
+    const dir = tip.clone().sub(pts[pts.length - 2]!).normalize();
+    const head = new THREE.Mesh(new THREE.ConeGeometry(R * 0.05, R * 0.13, 16), rotMat);
+    head.position.copy(tip);
+    head.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+    g.add(head);
+    const rl = this.label('ball turns', R);
+    rl.position.set(x0, rho + R * 0.18, 0);
+    g.add(rl);
+
+    this.axis = g;
+    this.scene.add(g);
   }
 
   private resize(): void {

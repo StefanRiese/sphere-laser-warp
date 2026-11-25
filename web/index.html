@@ -35,6 +35,7 @@
       <label>Latitude limit (deg) <input id="latitudeLimitDeg" type="number" min="5" max="80" step="1" value="30" /></label>
       <label>Resolution (dpi) <input id="dpi" type="number" min="50" max="1000" step="1" value="254" /></label>
       <label>Ball colour (3D preview only) <input id="ballColor" type="color" value="#9b1c1c" /></label>
+      <label class="check"><input id="showAxis" type="checkbox" checked /> Show rotation axis in 3D preview</label>
       <label class="check"><input id="showLimit" type="checkbox" checked /> Show latitude limit in 3D preview</label>
       <label class="check"><input id="mirror" type="checkbox" /> Mirror (engrave from the inside)</label>
       <label class="check"><input id="flipRotation" type="checkbox" /> Reverse rotation direction</label>
@@ -57,7 +58,7 @@
       <p class="hint">File to import: width runs along the rotation axis, height wraps around the ball.</p>
       <h2>3D preview</h2>
       <div id="ball3d" class="ball3d"></div>
-      <p class="hint">Drag to rotate, scroll to zoom. The red zones lie beyond the latitude limit, where the laser spot stretches and goes out of focus. This is how the engraving should look on the ball (from the outside). With &ldquo;Mirror&rdquo; on, look at the ball from the back, as through the glass.</p>
+      <p class="hint">Drag to rotate, scroll to zoom. The blue line is the rotation axis and the orange arrow shows which way the ball's surface turns at the front while the file is engraved in order (first row to last row). The red zones lie beyond the latitude limit, where the laser spot stretches and goes out of focus. This is how the engraving should look on the ball (from the outside). With &ldquo;Mirror&rdquo; on, look at the ball from the back, as through the glass.</p>
     </section>
   </main>
   <script type="module" src="./main.ts"></script>
