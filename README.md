@@ -49,6 +49,15 @@ squares), engrave it, then measure the centre square along the axis and around t
 enter the values under **Check a test engraving**. The tool reports both ratios and suggests the
 real ball diameter. A deviation along the axis points at the machine (X scale, focus), not the ball.
 
+## Result
+
+The same logo engraved on a matte red glass bauble with an xTool M1 + RA2 Pro: left with the
+image warped by this tool, right with the plain, unwarped image.
+
+| With Sphere Laser Warp | Without warp |
+| :---: | :---: |
+| <img src="images/bauble-warped.jpg" alt="Bauble engraved with the warped image" width="320" /> | <img src="images/bauble-unwarped.jpg" alt="Bauble engraved with the unwarped image" width="320" /> |
+
 ## How it works
 
 For a ball of radius R with a horizontal rotary axis and the beam from the top:
