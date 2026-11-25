@@ -11,7 +11,7 @@ xTool Creative Space or LightBurn. Roller-drive kinematics is out of scope unles
 
 ## Planned layout
 
-- `core/`: pure, DOM-free TypeScript (projections, warp, machine kinematics, G-code). Unit-tested.
+- `core/`: pure, DOM-free TypeScript (projections, warp). Unit-tested.
 - `web/`: Vite app (UI, canvas and three.js preview, Web Worker for resampling).
 - `presets/`: machine presets as JSON.
 - `docs/`: geometry write-up.

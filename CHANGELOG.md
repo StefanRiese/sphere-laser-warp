@@ -11,4 +11,4 @@ versions follow [Semantic Versioning](https://semver.org/).
 - `core/` projections (equidistant, stereographic, equal-area) and bilinear warp, with unit tests.
 - GitHub Pages deploy workflow.
 - Initial repository with MIT license, README, changelog and CLAUDE.md.
-- Scope decision: chuck-driven rotary only; roller kinematics deferred.
+- Scope decision: chuck-driven rotary only, PNG/SVG output only; no G-code, no roller kinematics.
