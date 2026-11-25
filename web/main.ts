@@ -197,7 +197,6 @@ function imageWidthMmFor(prevMode: 'width' | 'height', input: HTMLInputElement):
 
 // --- machine presets ---
 const presetSel = $<HTMLSelectElement>('preset');
-const presetNotes = $('presetNotes');
 presetSel.add(new Option('Custom (no preset)', ''));
 presets.forEach((p, i) => presetSel.add(new Option(p.name, String(i))));
 
@@ -214,7 +213,6 @@ function applyPreset(p: PresetParams): void {
 
 presetSel.addEventListener('change', () => {
   const preset = presetSel.value === '' ? null : presets[Number(presetSel.value)];
-  presetNotes.textContent = preset ? [preset.description, ...(preset.notes ?? [])].join(' ') : '';
   if (!preset) return;
   applyPreset(preset.params);
   run();

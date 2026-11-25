@@ -14,7 +14,6 @@ export interface PresetParams {
 export interface Preset {
   name: string;
   description: string;
-  notes?: string[];
   params: PresetParams;
 }
 
