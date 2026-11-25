@@ -23,6 +23,8 @@ button:disabled { opacity: .4; cursor: default; }
 .warn { margin: 0; color: var(--warn); font-size: .85rem; }
 .preview { min-width: 0; }
 canvas { max-width: 100%; height: auto; border: 1px solid var(--muted); background: repeating-conic-gradient(#8883 0 25%, transparent 0 50%) 0 0 / 16px 16px; }
+.dropzone { border: 2px dashed var(--muted); border-radius: 6px; padding: 18px 10px; text-align: center; color: var(--muted); font-size: .9rem; }
+.dropzone.over { border-color: var(--accent); color: var(--accent); background: var(--panel); }
 .hint { color: var(--muted); font-size: .85rem; }
 h2 { font-size: 1.1rem; margin: 24px 0 8px; }
 .ball3d { width: 100%; height: 420px; border-radius: 10px; background: var(--panel); overflow: hidden; }

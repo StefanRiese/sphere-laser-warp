@@ -7,6 +7,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Drop zone in the controls: drag an image (PNG, JPG, SVG, ...) onto it to load it.
+- "Reset settings" button that puts all settings back to the defaults of the first preset.
 - Settings are remembered between visits and kept in the URL hash, so a setup can be shared by copying the address (the image itself is not included).
 - "GitHub" link in the header pointing to the repository.
 - Site icon (favicon, also shown next to the title in the header) and status badges in the README.

@@ -33,6 +33,8 @@ The interface is available in English and German and in a light or dark theme (s
 
 Your settings are remembered in the browser and mirrored in the page address, so you can copy the
 URL to share or bookmark a setup (the image itself is not part of it).
+Images can also be dropped onto the drop zone above the file picker.
+"Reset settings" restores the defaults.
 
 Import behaviour of the SVG in xTool Studio is untested; use the PNG if it misbehaves.
 

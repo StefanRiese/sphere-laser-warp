@@ -51,6 +51,24 @@ export function restoreSettings(): boolean {
   return Object.keys(merged).length > 0;
 }
 
+/** Put every remembered control back to its HTML default and forget the stored settings and the URL hash. */
+export function resetSettings(): void {
+  for (const id of SETTING_IDS) {
+    const c = el(id);
+    if (c instanceof HTMLSelectElement) {
+      const d = Array.from(c.options).findIndex((o) => o.defaultSelected);
+      c.selectedIndex = d >= 0 ? d : 0;
+    } else if (c.type === 'checkbox') c.checked = c.defaultChecked;
+    else c.value = c.defaultValue;
+  }
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
+  }
+  history.replaceState(null, '', location.pathname + location.search);
+}
+
 /** Remember the current settings and mirror them in the URL hash so the address can be shared. */
 export function saveSettings(): void {
   const text = encodeSettings(read());

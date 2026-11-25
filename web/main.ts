@@ -10,7 +10,7 @@ import type { BallPreview } from './preview3d';
 import { applyStatic, fmt, getLang, onLangChange, setLang, t } from './i18n';
 import type { Lang } from './strings';
 import { effectiveTheme, setTheme } from './theme';
-import { restoreSettings, saveSettings } from './settings';
+import { resetSettings, restoreSettings, saveSettings } from './settings';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const canvas = $<HTMLCanvasElement>('out');
@@ -151,9 +151,25 @@ worker.onmessage = (e: MessageEvent) => {
 $<HTMLInputElement>('showAxis').addEventListener('input', (e) => preview?.setAxisVisible((e.target as HTMLInputElement).checked));
 $<HTMLInputElement>('ballColor').addEventListener('input', (e) => preview?.setBallColor((e.target as HTMLInputElement).value));
 
-$<HTMLInputElement>('file').addEventListener('change', async (e) => {
+$<HTMLInputElement>('file').addEventListener('change', (e) => {
   const f = (e.target as HTMLInputElement).files?.[0];
-  if (!f) return;
+  if (f) void loadFile(f);
+});
+
+const dropzone = $('dropzone');
+dropzone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropzone.classList.add('over');
+});
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('over');
+  const f = e.dataTransfer?.files?.[0];
+  if (f) void loadFile(f);
+});
+
+async function loadFile(f: File): Promise<void> {
   sourceName = f.name.replace(/\.[^.]+$/, '') || 'image';
   try {
     const p = readParams();
@@ -167,7 +183,7 @@ $<HTMLInputElement>('file').addEventListener('change', async (e) => {
     warn.hidden = false;
     warn.textContent = err instanceof Error ? t(err.message) : t('errLoad');
   }
-});
+}
 
 document.querySelectorAll('.controls input:not(#file):not(#ballColor):not(#showAxis), .controls select').forEach((el) =>
   el.addEventListener('input', () => (el.id === 'whiteBg' ? run() : schedule())),
@@ -258,6 +274,17 @@ if (presets.length > 0) {
 }
 // settings from an earlier visit or from the URL hash override the preset defaults
 restoreSettings();
+$<HTMLButtonElement>('resetBtn').addEventListener('click', () => {
+  resetSettings();
+  if (presets.length > 0) {
+    presetSel.value = '0';
+    presetSel.dispatchEvent(new Event('change'));
+  }
+  updateSizeLabel();
+  updateFileHint();
+  run();
+  setTimeout(saveSettings, 0);
+});
 // pasting a different settings hash into an open page applies it
 window.addEventListener('hashchange', () => {
   restoreSettings();
