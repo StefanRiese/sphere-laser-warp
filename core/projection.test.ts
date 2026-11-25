@@ -56,6 +56,24 @@ function anisotropy(proj: Projection, x: number, theta: number) {
   return { ratio: s1 / s2, scale: Math.sqrt(Math.abs(det)) };
 }
 
+describe('placement', () => {
+  const pl = { phi: 0.3, theta: 1.2 };
+  it.each(projections)('%s places the image centre at the requested point', (proj) => {
+    const x = R * Math.sin(pl.phi);
+    const p = surfaceToPlane(proj, R, x, pl.theta, pl)!;
+    expect(p.u).toBeCloseTo(0, 6);
+    expect(p.v).toBeCloseTo(0, 6);
+  });
+  it.each(projections)('%s round-trips with a placement', (proj) => {
+    for (const [u, v] of [[5, 3], [-10, 6], [12, -9]] as const) {
+      const s = planeToSurface(proj, R, u, v, pl)!;
+      const back = surfaceToPlane(proj, R, s.x, s.theta, pl)!;
+      expect(back.u).toBeCloseTo(u, 6);
+      expect(back.v).toBeCloseTo(v, 6);
+    }
+  });
+});
+
 describe('local distortion', () => {
   const pts: Array<[number, number]> = [[0, 0], [8, 0.2], [-12, -0.3], [15, 0.5]];
 

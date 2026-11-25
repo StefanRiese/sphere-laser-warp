@@ -15,7 +15,16 @@
     <section class="controls">
       <label>Image (PNG, JPG, SVG, ...) <input id="file" type="file" accept="image/*,.svg" /></label>
       <label>Ball diameter (mm) <input id="ballDiameterMm" type="number" min="10" step="0.5" value="70" /></label>
-      <label>Image width on ball (mm) <input id="imageWidthMm" type="number" min="1" step="0.5" value="40" /></label>
+      <label>Define image size by
+        <select id="sizeBy">
+          <option value="width">Width</option>
+          <option value="height">Height</option>
+        </select>
+      </label>
+      <label><span id="sizeLabel">Image width on ball (mm)</span> <input id="imageSizeMm" type="number" min="1" step="0.5" value="40" /></label>
+      <label>Rotation axis direction in the image (deg, 0 = horizontal, 90 = vertical) <input id="axisAngleDeg" type="number" min="-180" max="180" step="1" value="0" /></label>
+      <label>Image position along the axis (mm from ball centre) <input id="offsetAxisMm" type="number" step="0.5" value="0" /></label>
+      <label>Image position around the ball (deg, 0 = facing front) <input id="offsetRotationDeg" type="number" min="-180" max="180" step="1" value="0" /></label>
       <label>Projection
         <select id="projection">
           <option value="equidistant">Equidistant (true distances)</option>
@@ -29,6 +38,12 @@
       <label class="check"><input id="showLimit" type="checkbox" checked /> Show latitude limit in 3D preview</label>
       <label class="check"><input id="mirror" type="checkbox" /> Mirror (engrave from the inside)</label>
       <label class="check"><input id="flipRotation" type="checkbox" /> Reverse rotation direction</label>
+      <label>Export orientation
+        <select id="orientation">
+          <option value="rows">Rotation along image height (axis horizontal)</option>
+          <option value="cols">Rotation along image width (axis vertical)</option>
+        </select>
+      </label>
       <label class="check"><input id="whiteBg" type="checkbox" checked /> White background (instead of transparent)</label>
       <div class="buttons">
         <button id="dlPng" disabled>Download PNG</button>

@@ -7,6 +7,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Define the image size by width or height.
+- Define the rotation axis direction in the image (any angle), the image position along and around the ball, and the export orientation (rotation along image height or width).
 - Latitude-limit overlay in the 3D preview: red zones and rings beyond the limit, with a toggle.
 - Interactive 3D ball preview (three.js, lazy-loaded) showing the engraving wrapped on the ball, with a ball colour picker.
 - SVG files can be uploaded; they are rasterised at a resolution matched to the output.

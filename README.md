@@ -10,10 +10,12 @@ Everything runs client-side as a static site on GitHub Pages. Images are never u
 ## Usage
 
 1. Open the site, load an image (PNG, JPG, SVG and other browser-supported formats), enter the ball diameter and the image width on the ball.
-2. Download the **PNG** (carries the DPI, so it imports at the right size) or the **SVG**
+2. Define the image size by width or height, set which image direction runs along the rotation
+   axis, and optionally move the image along or around the ball.
+3. Download the **PNG** (carries the DPI, so it imports at the right size) or the **SVG**
    (physical size in mm, raster embedded) and import it in xTool Studio / LightBurn.
-3. In rotary mode set the object diameter to the ball diameter. The image width runs along
-   the rotation axis, the image height wraps around the ball.
+4. In rotary mode set the object diameter to the ball diameter. By default the image width runs along
+   the rotation axis and the image height wraps around the ball; the export orientation can be swapped.
 
 Import behaviour of the SVG in xTool Studio is untested; use the PNG if it misbehaves.
 

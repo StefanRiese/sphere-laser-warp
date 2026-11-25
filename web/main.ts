@@ -1,4 +1,4 @@
-import { DEFAULT_PARAMS, type WarpParams } from '../core/warp';
+import { DEFAULT_PARAMS, type WarpParams, transpose } from '../core/warp';
 import type { Projection } from '../core/projection';
 import { loadImage } from './loadImage';
 import { canvasToPng, canvasToSvg, download } from './export';
@@ -43,15 +43,31 @@ function num(id: string, fallback: number): number {
   return Number.isFinite(v) && v > 0 ? v : fallback;
 }
 
+/** Like num() but accepts zero and negative values. */
+function numAny(id: string, fallback: number): number {
+  const v = parseFloat($<HTMLInputElement>(id).value);
+  return Number.isFinite(v) ? v : fallback;
+}
+
+/** Image width on the ball in mm, derived from the width or height the user entered. */
+function imageWidthMm(): number {
+  const v = num('imageSizeMm', DEFAULT_PARAMS.imageWidthMm);
+  if ($<HTMLSelectElement>('sizeBy').value === 'width' || !source) return v;
+  return (v * source.width) / source.height;
+}
+
 function readParams(): WarpParams {
   return {
     ballDiameterMm: num('ballDiameterMm', DEFAULT_PARAMS.ballDiameterMm),
-    imageWidthMm: num('imageWidthMm', DEFAULT_PARAMS.imageWidthMm),
+    imageWidthMm: imageWidthMm(),
     projection: $<HTMLSelectElement>('projection').value as Projection,
     latitudeLimitDeg: Math.min(80, num('latitudeLimitDeg', DEFAULT_PARAMS.latitudeLimitDeg)),
     dpi: num('dpi', DEFAULT_PARAMS.dpi),
     mirror: $<HTMLInputElement>('mirror').checked,
     flipRotation: $<HTMLInputElement>('flipRotation').checked,
+    axisAngleDeg: numAny('axisAngleDeg', 0),
+    offsetAxisMm: numAny('offsetAxisMm', 0),
+    offsetRotationDeg: numAny('offsetRotationDeg', 0),
   };
 }
 
@@ -75,25 +91,36 @@ function run(): void {
 worker.onmessage = (e: MessageEvent) => {
   const r = e.data;
   if (r.id !== reqId) return; // stale result
-  canvas.width = r.width;
-  canvas.height = r.height;
-  const ctx = canvas.getContext('2d')!;
+  // rawCanvas keeps the canonical layout (columns = axis, rows = rotation); the 3D preview needs that
   rawCanvas.width = r.width;
   rawCanvas.height = r.height;
-  rawCanvas.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(r.buffer), r.width, r.height), 0, 0);
-  ctx.clearRect(0, 0, r.width, r.height);
-  ctx.drawImage(rawCanvas, 0, 0);
+  const raw = new ImageData(new Uint8ClampedArray(r.buffer), r.width, r.height);
+  rawCanvas.getContext('2d')!.putImageData(raw, 0, 0);
+
+  // the exported/displayed file may have the rotation along the image width instead
+  const cols = $<HTMLSelectElement>('orientation').value === 'cols';
+  const shown = cols ? transpose(raw) : raw;
+  canvas.width = shown.width;
+  canvas.height = shown.height;
+  const ctx = canvas.getContext('2d')!;
+  ctx.clearRect(0, 0, shown.width, shown.height);
+  ctx.putImageData(new ImageData(new Uint8ClampedArray(shown.data), shown.width, shown.height), 0, 0);
   if ($<HTMLInputElement>('whiteBg').checked) {
     ctx.globalCompositeOperation = 'destination-over';
     ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, r.width, r.height);
+    ctx.fillRect(0, 0, shown.width, shown.height);
     ctx.globalCompositeOperation = 'source-over';
   }
-  sizeMm = { w: r.widthMm, h: r.heightMm };
-  info.textContent = `${r.width} x ${r.height} px = ${r.widthMm.toFixed(1)} x ${r.heightMm.toFixed(1)} mm (axis x circumference)`;
+  sizeMm = cols ? { w: r.heightMm, h: r.widthMm } : { w: r.widthMm, h: r.heightMm };
+  const imgW = readParams().imageWidthMm;
+  const imgH = source ? (imgW * source.height) / source.width : imgW;
+  info.textContent =
+    `Image on ball: ${imgW.toFixed(1)} x ${imgH.toFixed(1)} mm. ` +
+    `File: ${shown.width} x ${shown.height} px = ${sizeMm.w.toFixed(1)} x ${sizeMm.h.toFixed(1)} mm ` +
+    (cols ? '(circumference x axis)' : '(axis x circumference)');
   warn.hidden = !r.clipped;
   warn.textContent = r.clipped
-    ? 'The image extends beyond the latitude limit or the visible side of the ball and was cut off. Reduce the image width or raise the limit.'
+    ? 'The image extends beyond the latitude limit or the visible side of the ball and was cut off. Reduce the image size, move it, or raise the limit.'
     : '';
   dlPng.disabled = dlSvg.disabled = false;
 
@@ -116,7 +143,7 @@ $<HTMLInputElement>('file').addEventListener('change', async (e) => {
   try {
     const p = readParams();
     // pixels needed along the longest image side at the chosen dpi (for SVG rasterisation)
-    const needed = (p.imageWidthMm / 25.4) * p.dpi * 1.5;
+    const needed = (Math.max(p.imageWidthMm, p.imageWidthMm * (source ? source.height / source.width : 1)) / 25.4) * p.dpi * 1.5;
     source = await loadImage(f, needed);
     run();
   } catch (err) {
@@ -135,3 +162,20 @@ dlPng.addEventListener('click', async () => {
 dlSvg.addEventListener('click', () => {
   download(canvasToSvg(canvas, sizeMm.w, sizeMm.h), `${sourceName}-sphere.svg`);
 });
+
+const sizeBy = $<HTMLSelectElement>('sizeBy');
+sizeBy.addEventListener('change', () => {
+  const input = $<HTMLInputElement>('imageSizeMm');
+  // keep the image the same physical size when switching what is being defined
+  if (source) {
+    const w = imageWidthMmFor(sizeBy.value === 'height' ? 'width' : 'height', input);
+    const h = (w * source.height) / source.width;
+    input.value = String(Math.round((sizeBy.value === 'width' ? w : h) * 100) / 100);
+  }
+  $('sizeLabel').textContent = sizeBy.value === 'width' ? 'Image width on ball (mm)' : 'Image height on ball (mm)';
+});
+
+function imageWidthMmFor(prevMode: 'width' | 'height', input: HTMLInputElement): number {
+  const v = parseFloat(input.value) || DEFAULT_PARAMS.imageWidthMm;
+  return prevMode === 'width' || !source ? v : (v * source.width) / source.height;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_PARAMS, type RGBAImage, warp } from './warp';
+import { DEFAULT_PARAMS, type RGBAImage, transpose, warp } from './warp';
 
 function solid(w: number, h: number, rgba: [number, number, number, number]): RGBAImage {
   const data = new Uint8ClampedArray(w * h * 4);
@@ -55,5 +55,48 @@ describe('warp', () => {
     expect(r.theta0 + r.thetaSpan / 2).toBeCloseTo(0, 1); // centred on the view direction
     const r2 = warp(solid(40, 40, [255, 0, 0, 255]), { ...base, imageWidthMm: 20, flipRotation: true });
     expect(Math.sign(r2.thetaSpan)).toBe(-Math.sign(r.thetaSpan));
+  });
+
+  const centroid = (r: ReturnType<typeof warp>) => {
+    let sx = 0, sy = 0, n = 0;
+    for (let y = 0; y < r.height; y++) {
+      for (let x = 0; x < r.width; x++) {
+        if ((r.data[(y * r.width + x) * 4 + 3] ?? 0) > 0) { sx += x; sy += y; n++; }
+      }
+    }
+    return { x: sx / n, y: sy / n, n };
+  };
+
+  it('offsetAxisMm moves the image along the rotation axis', () => {
+    const img = solid(20, 20, [255, 0, 0, 255]);
+    const a = centroid(warp(img, { ...base, imageWidthMm: 10 }));
+    const b = warp(img, { ...base, imageWidthMm: 10, offsetAxisMm: 8 });
+    expect((centroid(b).x - a.x) * b.mmPerPx).toBeGreaterThan(7);
+    expect((centroid(b).x - a.x) * b.mmPerPx).toBeLessThan(9);
+  });
+
+  it('offsetRotationDeg moves the image around the ball, even to the back', () => {
+    const img = solid(20, 20, [255, 0, 0, 255]);
+    const r = warp(img, { ...base, imageWidthMm: 10, offsetRotationDeg: 180 });
+    expect(r.height).toBeLessThan(base.ballDiameterMm * Math.PI * 0.4 / r.mmPerPx); // not split at the wrap
+    expect(Math.abs(r.theta0 + r.thetaSpan / 2 - Math.PI)).toBeLessThan(0.1);
+  });
+
+  it('axisAngleDeg 90 makes the image height run along the axis', () => {
+    const img = solid(40, 10, [0, 0, 255, 255]); // wide image
+    const flat = warp(img, { ...base, imageWidthMm: 30 });
+    const rot = warp(img, { ...base, imageWidthMm: 30, axisAngleDeg: 90 });
+    // wide along the axis at 0 deg, wide around the ball at 90 deg
+    expect(centroid(flat).n).toBeGreaterThan(0);
+    expect(flat.width / flat.height).toBeGreaterThan(rot.width / rot.height);
+  });
+
+  it('transpose swaps width and height and keeps pixels', () => {
+    const img = solid(3, 2, [1, 2, 3, 255]);
+    img.data.set([9, 9, 9, 255], 0);
+    const t = transpose(img);
+    expect([t.width, t.height]).toEqual([2, 3]);
+    expect(t.data[0]).toBe(9);
+    expect(t.data[(1 * 2 + 0) * 4]).toBe(1);
   });
 });

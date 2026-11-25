@@ -1,4 +1,4 @@
-import { type Projection, planeToSurface, surfaceToPlane } from './projection';
+import { type Placement, type Projection, planeToSurface, surfaceToPlane } from './projection';
 
 export interface RGBAImage {
   data: Uint8ClampedArray;
@@ -20,6 +20,12 @@ export interface WarpParams {
   mirror: boolean;
   /** Reverse the rotation direction. */
   flipRotation: boolean;
+  /** Which image direction runs along the rotation axis, in degrees counter-clockwise from horizontal. */
+  axisAngleDeg: number;
+  /** Shift of the image centre along the rotation axis in mm (from the ball's centre plane). */
+  offsetAxisMm: number;
+  /** Rotation of the image centre around the ball in degrees (0 = facing the viewer). */
+  offsetRotationDeg: number;
 }
 
 export interface WarpResult extends RGBAImage {
@@ -42,6 +48,9 @@ export const DEFAULT_PARAMS: WarpParams = {
   dpi: 254,
   mirror: false,
   flipRotation: false,
+  axisAngleDeg: 0,
+  offsetAxisMm: 0,
+  offsetRotationDeg: 0,
 };
 
 function sampleBilinear(src: RGBAImage, fx: number, fy: number, out: Uint8ClampedArray, o: number): void {
@@ -74,7 +83,11 @@ function sampleBilinear(src: RGBAImage, fx: number, fy: number, out: Uint8Clampe
 }
 
 /** True if the image border leaves the visible hemisphere or the latitude limit (|x| > xMax). */
-function footprintClipped(proj: Projection, R: number, w: number, h: number, xMax: number): boolean {
+function footprintClipped(
+  proj: Projection, R: number, w: number, h: number, xMax: number, alpha: number, pl: Placement,
+): boolean {
+  const ca = Math.cos(alpha);
+  const sa = Math.sin(alpha);
   const N = 64;
   for (let i = 0; i <= N; i++) {
     const t = i / N;
@@ -84,8 +97,9 @@ function footprintClipped(proj: Projection, R: number, w: number, h: number, xMa
       [-w / 2, (t - 0.5) * h],
       [w / 2, (t - 0.5) * h],
     ];
-    for (const [u, v] of pts) {
-      const s = planeToSurface(proj, R, u, v);
+    for (const [ui, vi] of pts) {
+      // image coordinates -> sphere plane (inverse of the axis rotation)
+      const s = planeToSurface(proj, R, ui * ca + vi * sa, -ui * sa + vi * ca, pl);
       if (!s || Math.abs(s.x) > xMax) return true;
     }
   }
@@ -109,20 +123,30 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
   const imgW = p.imageWidthMm;
   const imgH = (p.imageWidthMm * src.height) / src.width;
   const sgn = p.flipRotation ? -1 : 1;
+  const alpha = (p.axisAngleDeg * Math.PI) / 180;
+  const ca = Math.cos(alpha);
+  const sa = Math.sin(alpha);
+  const pl: Placement = {
+    phi: Math.asin(Math.max(-1, Math.min(1, p.offsetAxisMm / R))),
+    theta: (p.offsetRotationDeg * Math.PI) / 180,
+  };
 
   // Pass 1: find which rows (rotation angles) contain any part of the image, so we only emit those.
   const rowHasData = new Uint8Array(fullRows);
   const full = new Uint8ClampedArray(width * fullRows * 4);
 
   for (let row = 0; row < fullRows; row++) {
-    const theta = sgn * (((row + 0.5) / fullRows) * 2 * Math.PI - Math.PI);
+    const theta = pl.theta + sgn * (((row + 0.5) / fullRows) * 2 * Math.PI - Math.PI);
     for (let col = 0; col < width; col++) {
       const x = ((col + 0.5) / width) * 2 * xMax - xMax;
-      const pl = surfaceToPlane(p.projection, R, x, theta);
-      if (!pl) continue;
-      const u = p.mirror ? -pl.u : pl.u;
+      const q = surfaceToPlane(p.projection, R, x, theta, pl);
+      if (!q) continue;
+      // rotate so the chosen image direction runs along the axis, then optionally mirror
+      const ui = q.u * ca - q.v * sa;
+      const vi = q.u * sa + q.v * ca;
+      const u = p.mirror ? -ui : ui;
       const fx = (u / imgW + 0.5) * src.width;
-      const fy = (0.5 - pl.v / imgH) * src.height;
+      const fy = (0.5 - vi / imgH) * src.height;
       if (fx < 0 || fy < 0 || fx > src.width || fy > src.height) continue;
       const o = (row * width + col) * 4;
       sampleBilinear(src, fx, fy, full, o);
@@ -142,14 +166,31 @@ export function warp(src: RGBAImage, p: WarpParams): WarpResult {
     return { data: new Uint8ClampedArray(4), width: 1, height: 1, mmPerPx, widthMm: mmPerPx, heightMm: mmPerPx, clipped: true, theta0: 0, thetaSpan: 0 };
   }
 
-  const clipped = footprintClipped(p.projection, R, imgW, imgH, xMax);
+  const clipped = footprintClipped(p.projection, R, imgW, imgH, xMax, alpha, pl);
 
   const height = last - first + 1;
   const data = full.slice(first * width * 4, (last + 1) * width * 4);
   const dTheta = sgn * ((2 * Math.PI) / fullRows);
-  const theta0 = sgn * ((first / fullRows) * 2 * Math.PI - Math.PI);
+  const theta0 = pl.theta + sgn * ((first / fullRows) * 2 * Math.PI - Math.PI);
   return {
     data, width, height, mmPerPx, widthMm: width * mmPerPx, heightMm: height * mmPerPx, clipped,
     theta0, thetaSpan: dTheta * height,
   };
+}
+
+/** Swap rows and columns (used for the export orientation where the rotation runs along the image width). */
+export function transpose(img: RGBAImage): RGBAImage {
+  const { width: w, height: h, data } = img;
+  const out = new Uint8ClampedArray(data.length);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const s = (y * w + x) * 4;
+      const d = (x * h + y) * 4;
+      out[d] = data[s]!;
+      out[d + 1] = data[s + 1]!;
+      out[d + 2] = data[s + 2]!;
+      out[d + 3] = data[s + 3]!;
+    }
+  }
+  return { data: out, width: h, height: w };
 }
