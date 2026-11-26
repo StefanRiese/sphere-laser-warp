@@ -7,6 +7,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Page description, canonical URL and Open Graph / Twitter card tags (with a preview image), so shared links show a title, text and picture.
 - Download counter in the footer: each PNG/SVG/vector download increments a public number (GoatCounter event; cookie-free, nothing about the image or visitor is sent). Hidden if the service is unreachable.
 - Drop zone in the controls: drag an image (PNG, JPG, SVG, ...) onto it to load it.
 - "Reset settings" button that puts all settings back to the defaults of the first preset.
