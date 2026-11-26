@@ -10,7 +10,7 @@ import type { BallPreview } from './preview3d';
 import { applyStatic, fmt, getLang, onLangChange, setLang, t } from './i18n';
 import type { Lang } from './strings';
 import { effectiveTheme, setTheme } from './theme';
-import { countUse, countVisit, loadCount } from './counter';
+import { countUse, countVisit } from './counter';
 import { resetSettings, restoreSettings, saveSettings } from './settings';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -368,7 +368,6 @@ onLangChange(() => {
   run();
 });
 applyStatic();
-void loadCount();
 countVisit();
 updateSizeLabel();
 updateFileHint();

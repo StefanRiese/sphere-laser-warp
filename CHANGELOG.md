@@ -7,9 +7,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Visit counter: one cookie-free GoatCounter pageview per page load (only the path is sent; skipped on localhost). Visible in the GoatCounter dashboard, not on the page.
+- Visit counter: one cookie-free GoatCounter pageview per page load (only the path is sent; skipped on localhost).
 - Page description, canonical URL and Open Graph / Twitter card tags (with a preview image), so shared links show a title, text and picture.
-- Download counter in the footer: each PNG/SVG/vector download increments a public number (GoatCounter event; cookie-free, nothing about the image or visitor is sent). Hidden if the service is unreachable.
+- Download counter: each PNG/SVG/vector download is sent as a GoatCounter event (cookie-free, nothing about the image or visitor is sent). Not shown on the page; read it in the GoatCounter dashboard.
 - Drop zone in the controls: drag an image (PNG, JPG, SVG, ...) onto it to load it.
 - "Reset settings" button that puts all settings back to the defaults of the first preset.
 - Settings are remembered between visits and kept in the URL hash, so a setup can be shared by copying the address (the image itself is not included).
