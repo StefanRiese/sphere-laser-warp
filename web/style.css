@@ -60,7 +60,13 @@ footer { max-width: 1100px; margin: 0 auto; padding-top: 8px; text-align: left; 
   header .headrow { flex-wrap: wrap; gap: 4px 12px; }
   .headtools { gap: 8px 12px; }
   header p { font-size: .9rem; margin-bottom: 12px; }
-  main { gap: 16px; }
+  main { gap: 12px; }
+  /* flat preview on top, then the controls, then the 3D preview: .preview dissolves so its children can be ordered separately */
+  .preview { display: contents; }
+  .flatframe, #fileHint { order: -1; }
+  #fileHint { margin: 0; }
+  .preview h2 { margin: 12px 0 0; }
+  .preview > p.hint { margin: 0; }
   .controls { padding: 12px; min-width: 0; }
   .controls input[type=number], .controls select, .controls input[type=file] { width: 100%; }
   /* 16px stops iOS Safari from zooming into a field on focus; 44px is the minimum tap target */
