@@ -30,6 +30,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 - README, changelog and CLAUDE.md; MIT license.
 
 ### Changed
+- Mobile layout tuned for phones (iPhone 15, 393 px wide): the form no longer overflows the screen, the header fits on one row, fields are full width with 16 px text (no zoom on focus in iOS Safari) and 44 px tap targets, the 3D view is shorter, safe-area insets are respected, and the drop zone is hidden on touch screens.
 - The output is cropped to the image footprint and never padded; the info line shows how far from the equator the image reaches.
 - The file hint under the preview follows the export orientation.
 
