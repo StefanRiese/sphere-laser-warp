@@ -1,5 +1,6 @@
 /**
- * Usage counter: counts downloads (PNG, SVG, vector SVG) as one GoatCounter event.
+ * Usage counter: counts visits (one pageview per page load) and downloads (PNG, SVG, vector SVG,
+ * each one GoatCounter event).
  * GoatCounter is cookie-free and stores no personal data; only the event name is sent.
  * The displayed number comes from its public counter endpoint (setting "Allow using the
  * visitor counter" must be on). Failures (offline, blocked, service gone) are ignored;
@@ -37,6 +38,12 @@ async function read(): Promise<number | null> {
 /** Show the current count (call once on start). */
 export async function loadCount(): Promise<void> {
   show(await read());
+}
+
+/** Count one visit (call once on start). Only the path is sent, no referrer or other page data. */
+export function countVisit(): void {
+  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return; // skip dev runs
+  new Image().src = `${SITE}/count?p=/&t=Sphere%20Laser%20Warp&rnd=${Math.random().toString(36).slice(2)}`;
 }
 
 /** Count one use and bump the displayed number. */
